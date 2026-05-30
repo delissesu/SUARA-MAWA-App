@@ -18,36 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'PublicSans'
       ),
-      home: AnimatedSplashScreen(
-        splash: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/images/logo.png', width: 180, height: 90),
-            const SizedBox(height: 20),
-            const Text(
-              'SUARA MAWA',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Suarakan Aspirasimu',
-              style: TextStyle(fontSize: 14, color: AppColors.subtext1),
-            ),
-          ],
-        ),
-        nextScreen: PenindakMainScreen(),
-        splashTransition: SplashTransition.scaleTransition,
-        pageTransitionType: PageTransitionType.fade,
-        backgroundColor: AppColors.background,
-        duration: 1500,
-        animationDuration: const Duration(milliseconds: 500),
-        splashIconSize: 300,
-      ),
+      home: PenindakMainScreen()
     );
   }
 }

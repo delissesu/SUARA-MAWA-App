@@ -2,6 +2,10 @@
 
 Sebuah aplikasi untuk menampung aspirasi dan laporan mahasiswa
 
+## Running Project
+DO:
+    flutter run --dart-define-from-file .\.env
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
