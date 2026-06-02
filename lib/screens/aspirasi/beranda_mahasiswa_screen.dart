@@ -6,6 +6,7 @@ import 'widgets/submit_banner.dart';
 import 'widgets/recent_activity_section.dart';
 import 'widgets/floating_submit_button.dart';
 import 'widgets/bottom_nav_bar.dart';
+import 'form_aspirasi/form_aspirasi_screen.dart';
 
 class BerandaMahasiswaScreen extends StatelessWidget {
   const BerandaMahasiswaScreen({super.key});
@@ -36,6 +37,11 @@ class BerandaMahasiswaScreen extends StatelessWidget {
                   SubmitBanner(
                     onSubmitPressed: () {
                       // TODO: Navigate to submit aspiration screen
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const FormAspirasiScreen(),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 28),
@@ -53,6 +59,9 @@ class BerandaMahasiswaScreen extends StatelessWidget {
           FloatingSubmitButton(
             onPressed: () {
               // TODO: Navigate to submit aspiration screen
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FormAspirasiScreen()),
+              );
             },
           ),
         ],
