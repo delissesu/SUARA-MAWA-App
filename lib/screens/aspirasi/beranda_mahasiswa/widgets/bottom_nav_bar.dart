@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/nav_item.dart';
+import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/components/nav_item.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;

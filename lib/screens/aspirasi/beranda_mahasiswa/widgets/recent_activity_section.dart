@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/activity_card.dart';
+import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/components/activity_card.dart';
 
 class RecentActivitySection extends StatelessWidget {
   final VoidCallback? onViewAll;

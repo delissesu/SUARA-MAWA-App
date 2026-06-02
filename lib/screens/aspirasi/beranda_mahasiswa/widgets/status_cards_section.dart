@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/status_card.dart';
+import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/components/status_card.dart';
 
 class StatusCardsSection extends StatelessWidget {
   final int pendingCount;
