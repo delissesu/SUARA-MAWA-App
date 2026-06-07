@@ -1,6 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/screens/penindak/task_detail_screen.dart';
+import 'package:suara_mawa/screens/penindak/services/report_service.dart';
+import 'package:suara_mawa/screens/penindak/models/report.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -12,42 +15,157 @@ class TaskListScreen extends StatefulWidget {
 class _TaskListScreenState extends State<TaskListScreen> {
   int _selectedTabIndex = 0;
 
-  final List<Map<String, dynamic>> _tabs = [
+  final ReportService _reportService = ReportService();
+
+  // Data per tab
+  List<Report> _inProgressReports = [];
+  List<Report> _revisionReports = [];
+  List<Report> _resolvedReports = [];
+
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  // Status mapping for each tab
+  static const List<Map<String, dynamic>> _tabMeta = [
     {
       'title': 'Perlu Dikerjakan',
       'icon': Icons.list_alt,
-      'count': '8',
+      'status': 'in_progress',
+      'buttonLabel': 'Tindak',
     },
     {
       'title': 'Perlu Revisi',
       'icon': Icons.autorenew,
-      'count': '3',
+      'status': 'revision',
+      'buttonLabel': 'Lanjut Revisi',
     },
     {
       'title': 'Selesai',
       'icon': Icons.check_circle_outline,
-      'count': '',
+      'status': 'resolved',
+      'buttonLabel': 'Lihat Detail',
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // 1. Fetch departmentId from /user/me
+      final departmentId = await _reportService.getUserDepartmentId();
+      if (departmentId == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Gagal mendapatkan data departemen pengguna.';
+        });
+        return;
+      }
+
+      // 2. Fetch reports for all 3 statuses in parallel
+      final results = await Future.wait([
+        _reportService.fetchReports(departmentId: departmentId, status: 'in_progress'),
+        _reportService.fetchReports(departmentId: departmentId, status: 'revision'),
+        _reportService.fetchReports(departmentId: departmentId, status: 'resolved'),
+      ]);
+
+      setState(() {
+        _inProgressReports = results[0];
+        _revisionReports = results[1];
+        _resolvedReports = results[2];
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Terjadi kesalahan saat memuat data.';
+      });
+    }
+  }
+
+  List<Report> get _currentReports {
+    switch (_selectedTabIndex) {
+      case 0:
+        return _inProgressReports;
+      case 1:
+        return _revisionReports;
+      case 2:
+        return _resolvedReports;
+      default:
+        return [];
+    }
+  }
+
+  String _getCountText(int index) {
+    switch (index) {
+      case 0:
+        return _inProgressReports.length.toString();
+      case 1:
+        return _revisionReports.length.toString();
+      case 2:
+        return _resolvedReports.length.toString();
+      default:
+        return '0';
+    }
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} minggu lalu';
+    return '${(diff.inDays / 30).floor()} bulan lalu';
+  }
+
+  String _getTimeLabel(int tabIndex, DateTime createdAt) {
+    final timeAgo = _formatTimeAgo(createdAt);
+    switch (tabIndex) {
+      case 0:
+        return 'Dilaporkan $timeAgo';
+      case 1:
+        return 'Diperbarui $timeAgo';
+      case 2:
+        return 'Diselesaikan $timeAgo';
+      default:
+        return timeAgo;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 16.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildCustomTabs(),
-                const SizedBox(height: 24),
-                _buildTabContent(),
-              ],
+        child: RefreshIndicator(
+          onRefresh: _loadReports,
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 16.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildCustomTabs(),
+                  const SizedBox(height: 24),
+                  _buildTabContent(),
+                ],
+              ),
             ),
           ),
         ),
@@ -60,13 +178,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
-        children: List.generate(_tabs.length, (index) {
+        children: List.generate(_tabMeta.length, (index) {
           final isSelected = _selectedTabIndex == index;
-          final tab = _tabs[index];
+          final tab = _tabMeta[index];
+          final count = _isLoading ? '...' : _getCountText(index);
 
-          final String displayText = tab['count'].toString().isNotEmpty
-              ? "${tab['title']} (${tab['count']})"
-              : tab['title'];
+          final String displayText = "${tab['title']} ($count)";
 
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -115,86 +232,97 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Widget _buildTabContent() {
-    if (_selectedTabIndex == 0) {
-      return Column(
-        children: [
-          _buildTaskCard(
-            imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80', // Placeholder gambar jalan berlubang
-            title: 'Severe Pothole on Main Arterial Road',
-            category: 'Prasarana',
-            description: 'A very deep pothole has formed in the middle lane, causing multiple vehicles to swerve dangerously to avoid it...',
-            timeAgo: 'Dilaporkan 2 jam lalu',
-            buttonLabel: 'Tindak',
-            onActionPressed: () {},
-            onCardTapped: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
-              );
-            },
-          ),
-          _buildTaskCard(
-            imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80',
-            title: 'Lampu Penerangan Jalan Mati',
-            category: 'Mata Kuliah',
-            description: 'Lampu PJU di dekat halte busway mati total sejak 3 hari yang lalu, membuat jalanan menjadi sangat gelap saat malam.',
-            timeAgo: 'Dilaporkan 5 jam lalu',
-            buttonLabel: 'Tindak',
-            onActionPressed: () {},
-            onCardTapped: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
-              );
-            },
-          ),
-        ],
-      );
-    } else if (_selectedTabIndex == 1) {
-      return Column(
-        children: [
-          _buildTaskCard(
-            imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80',
-            title: 'Perbaikan Pipa Bocor Belum Selesai',
-            category: 'Pengajar',
-            description: 'Penambalan sementara sudah dilakukan namun air masih merembes ke jalan utama.',
-            timeAgo: 'Diperbarui 1 hari lalu',
-            buttonLabel: 'Lanjut Revisi',
-            onActionPressed: () {},
-            onCardTapped: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
-              );
-            },
-          ),
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          _buildTaskCard(
-            imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80',
-            title: 'Pohon Tumbang Telah Dievakuasi',
-            category: 'Pengajar',
-            description: 'Pohon yang menutupi jalan sepenuhnya telah berhasil dipotong dan dibersihkan dari bahu jalan.',
-            timeAgo: 'Diselesaikan 3 hari lalu',
-            buttonLabel: 'Lihat Detail',
-            onActionPressed: () {},
-            onCardTapped: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
-              );
-            },
-          ),
-        ],
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 80),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
+
+    if (_errorMessage != null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 80),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _loadReports,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final reports = _currentReports;
+
+    if (reports.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 80),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.inbox_outlined, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                'Belum ada laporan pada tab ini.',
+                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final buttonLabel = _tabMeta[_selectedTabIndex]['buttonLabel'] as String;
+
+    return Column(
+      children: reports.map((report) {
+        return _buildTaskCard(
+          thumbnailPath: report.thumbnail,
+          title: report.title,
+          category: report.categoriesName,
+          description: report.description,
+          timeAgo: _getTimeLabel(_selectedTabIndex, report.createdAt),
+          buttonLabel: buttonLabel,
+          onActionPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
+            );
+          },
+          onCardTapped: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
+            );
+          },
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildTaskCard({
-    required String imageUrl,
+    required String? thumbnailPath,
     required String title,
     required String category,
     required String description,
@@ -219,17 +347,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.network(
-                    imageUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 180,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                    ),
-                  ),
+                  child: thumbnailPath != null
+                      ? _buildAuthenticatedImage(thumbnailPath)
+                      : Container(
+                          height: 180,
+                          width: double.infinity,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                        ),
                 ),
               ],
             ),
@@ -318,6 +443,52 @@ class _TaskListScreenState extends State<TaskListScreen> {
           ],
         ),
       )
+    );
+  }
+
+  Widget _buildAuthenticatedImage(String thumbnailPath) {
+    return FutureBuilder<Uint8List?>(
+      future: _reportService.fetchThumbnailBytes(thumbnailPath),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 180,
+            width: double.infinity,
+            color: Colors.grey[200],
+            child: const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasData && snapshot.data != null) {
+          return Image.memory(
+            snapshot.data!,
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              height: 180,
+              color: Colors.grey[300],
+              child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+            ),
+          );
+        }
+
+        return Container(
+          height: 180,
+          width: double.infinity,
+          color: Colors.grey[300],
+          child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+        );
+      },
     );
   }
 }
