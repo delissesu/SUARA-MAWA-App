@@ -222,10 +222,7 @@ class _LoginFormState extends State<LoginForm> {
                     }
                   } else {
                     if (mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => DashboardPage()),
-                      );
+                      _authService.HandleError("SUCCESS", context);
                     }
                   }
                 }
@@ -270,10 +267,7 @@ class _LoginFormState extends State<LoginForm> {
                   }
                 } else {
                   if (mounted) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => DashboardPage()),
-                    );
+                    _authService.HandleError("SUCCESS", context);
                   }
                 }
               }
