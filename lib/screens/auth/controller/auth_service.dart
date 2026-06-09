@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
 import 'package:suara_mawa/screens/penindak/penindak_main_screen.dart';
-import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/beranda_mahasiswa_screen.dart';
+import 'package:suara_mawa/screens/aspirasi/aspirasi_main_screen.dart';
 
 class User {
   final String id;
@@ -434,7 +434,7 @@ class AuthService {
         } else if (userRoleId == 1) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const BerandaMahasiswaScreen()),
+            MaterialPageRoute(builder: (context) => const AspirasiMainScreen()),
           );
         } else {
           Navigator.pushReplacement(

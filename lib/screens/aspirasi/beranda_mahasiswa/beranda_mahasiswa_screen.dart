@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'widgets/beranda_app_bar.dart';
 import 'widgets/welcome_header.dart';
 import 'widgets/status_cards_section.dart';
 import 'widgets/submit_banner.dart';
 import 'widgets/recent_activity_section.dart';
 import 'widgets/floating_submit_button.dart';
-import 'widgets/bottom_nav_bar.dart';
 import '../form_aspirasi/form_aspirasi_screen.dart';
 
 class BerandaMahasiswaScreen extends StatelessWidget {
@@ -15,7 +13,6 @@ class BerandaMahasiswaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
-      appBar: const BerandaAppBar(),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -65,12 +62,6 @@ class BerandaMahasiswaScreen extends StatelessWidget {
             },
           ),
         ],
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: 0,
-        onTabChanged: (index) {
-          // TODO: Handle tab navigation
-        },
       ),
     );
   }

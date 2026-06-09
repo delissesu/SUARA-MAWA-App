@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'models/aspirasi_item.dart';
-import 'widgets/history_app_bar.dart';
 import 'widgets/history_page_header.dart';
 import 'widgets/search_bar_field.dart';
 import 'widgets/status_filter_chips.dart';
 import 'widgets/aspirasi_list_section.dart';
 import 'widgets/load_more_button.dart';
-import 'widgets/history_bottom_nav_bar.dart';
 
 class DaftarAspirasiScreen extends StatefulWidget {
   const DaftarAspirasiScreen({super.key});
@@ -69,7 +67,6 @@ class _DaftarAspirasiScreenState extends State<DaftarAspirasiScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
-      appBar: const HistoryAppBar(),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -115,12 +112,6 @@ class _DaftarAspirasiScreenState extends State<DaftarAspirasiScreen> {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: HistoryBottomNavBar(
-        currentIndex: 1,
-        onTabChanged: (index) {
-          // TODO: Handle tab navigation to Home (0) or Profile (2)
-        },
       ),
     );
   }
