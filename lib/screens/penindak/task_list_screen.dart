@@ -307,13 +307,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
           onActionPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
+              MaterialPageRoute(builder: (context) => TaskDetailScreen(reportId: report.id)),
             );
           },
           onCardTapped: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const TaskDetailScreen()),
+              MaterialPageRoute(builder: (context) => TaskDetailScreen(reportId: report.id)),
             );
           },
         );

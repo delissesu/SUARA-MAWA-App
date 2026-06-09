@@ -1,92 +1,51 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:suara_mawa/screens/penindak/services/report_service.dart';
+import 'package:video_player/video_player.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TaskDetailScreen extends StatefulWidget {
-  const TaskDetailScreen({super.key});
+  final int reportId;
+  const TaskDetailScreen({super.key, required this.reportId});
 
   @override
   State<TaskDetailScreen> createState() => _TaskDetailScreenState();
 }
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
-  final Map<String, dynamic> taskData = {
-    "id": 12,
-    "title": "AC Ruang Kuliah 3.2 Bocor dan Mengeluarkan Suara Bising",
-    "description": "Sudah 3 hari AC di ruang kuliah 3.2 bocor airnya deras sampai membasahi lantai depan. Suara kompresornya juga sangat bising mengganggu jalannya perkuliahan...",
-    "locationLat": -8.1651,
-    "locationLong": 113.7164,
-    "isPublic": true,
-    "isDeleted": false,
-    "likes": 42,
-    "category": {"id": 3, "name": "Prasarana"},
-    "department": {"id": 2, "name": "TU"},
-    "author": {
-      "id": "usr_98234",
-      "name": "Ahmad Dani",
-      "photoProfileUrl": "https://i.pravatar.cc/150?u=ahmad"
-    },
-    "attachments": [
-      {
-        "id": 101,
-        "name": "bukti-ac-bocor.jpg",
-        "filetype": "image",
-        "url": "https://images.unsplash.com/photo-1599839619722-39751411ea63?auto=format&fit=crop&q=80"
-      },
-      {
-        "id": 102,
-        "name": "rekaman-bising.mp4",
-        "filetype": "video",
-        "url": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80"
-      }
-    ],
-    "statusTimeline": [
-      {
-        "id": 55,
-        "status": "revision",
-        "changedAt": "2026-05-24T08:00:00.000Z",
-        "changedBy": {"name": "Admin Akademik"},
-        "feedback": {
-          "id": 9,
-          "description": "AC sudah dibersihkan, tetapi airnya masih menetes sedikit di bagian pipa samping. Tolong dicek kembali instalasi pembuangannya.",
-          "attachments": [
-            {
-              "id": 201,
-              "name": "foto-pipa-menetes.jpg",
-              "filetype": "image",
-              "url": "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?auto=format&fit=crop&q=80"
-            }
-          ]
-        }
-      },
-      {
-        "id": 42,
-        "status": "in_progress",
-        "changedAt": "2026-05-23T02:00:00.000Z",
-        "changedBy": {"name": "Admin Akademik"},
-        "feedback": null
-      },
-      {
-        "id": 10,
-        "status": "pending",
-        "changedAt": "2026-05-22T14:30:00.000Z",
-        "changedBy": {"name": "Ahmad Dani"},
-        "feedback": null
-      }
-    ],
-    "comments": [
-      {
-        "id": 1,
-        "comment": "Mohon segera diperbaiki ya pak/bu, besok jam 8 ada ujian di ruangan ini.",
-        "createdAt": "2026-05-23T10:00:00.000Z",
-        "user": {
-          "name": "Rian (Komting Kelas)",
-          "photoProfileUrl": "https://i.pravatar.cc/150?u=rian"
-        }
-      }
-    ]
-  };
+  final ReportService _service = ReportService();
+
+  Map<String, dynamic>? _data;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetail();
+  }
+
+  Future<void> _loadDetail() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    final result = await _service.fetchReportDetail(widget.reportId);
+    if (mounted) {
+      setState(() {
+        _data = result;
+        _isLoading = false;
+        if (result == null) _error = 'Gagal memuat detail laporan.';
+      });
+    }
+  }
+
+  // ──────────────── HELPERS ────────────────
 
   String _translateStatus(String status) {
     switch (status) {
@@ -96,6 +55,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         return 'Diproses';
       case 'revision':
         return 'Perlu Revisi';
+      case 'resolved':
+        return 'Selesai';
       case 'completed':
         return 'Selesai';
       default:
@@ -111,6 +72,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         return Colors.blue;
       case 'revision':
         return Colors.orange;
+      case 'resolved':
       case 'completed':
         return Colors.green;
       default:
@@ -119,9 +81,272 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   String _formatDate(String isoString) {
-    DateTime date = DateTime.parse(isoString);
-    return "${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} "
+          "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+    } catch (_) {
+      return isoString;
+    }
   }
+
+  // ──────────────── EVIDENCE ACTIONS ────────────────
+
+  void _onEvidenceTap(Map<String, dynamic> evidence) {
+    final fileInfo = evidence['file'] as Map<String, dynamic>;
+    final filetype = fileInfo['filetype'] as String;
+    final evidenceId = evidence['id'] as int;
+
+    switch (filetype) {
+      case 'image':
+        _showImagePopup(evidenceId);
+        break;
+      case 'document':
+        _previewDocument(evidenceId);
+        break;
+      case 'video':
+        _showVideoPopup(evidenceId);
+        break;
+    }
+  }
+
+  void _showImagePopup(int evidenceId) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            FutureBuilder<Uint8List?>(
+              future: _service.fetchEvidencePreviewBytes(evidenceId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  );
+                }
+                if (snapshot.hasData && snapshot.data != null) {
+                  return InteractiveViewer(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.memory(
+                        snapshot.data!,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  );
+                }
+                return const Icon(Icons.broken_image, color: Colors.white, size: 80);
+              },
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _previewDocument(int evidenceId) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => _PdfViewerDialog(
+        evidenceId: evidenceId,
+        service: _service,
+      ),
+    );
+  }
+
+  void _showVideoPopup(int evidenceId) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => _VideoPlayerDialog(
+        videoUrl: _service.getEvidencePreviewUrl(evidenceId),
+        evidenceId: evidenceId,
+        service: _service,
+      ),
+    );
+  }
+
+  // ──────────────── STATUS DETAIL ────────────────
+
+  void _onStatusTap(Map<String, dynamic> statusItem) async {
+    final statusId = statusItem['id'] as int;
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    final feedbackList = await _service.fetchFeedbackDetail(statusId);
+
+    if (!mounted) return;
+    Navigator.pop(context); // close loading
+
+    if (feedbackList == null || feedbackList.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Belum ada catatan untuk status ini.')),
+      );
+      return;
+    }
+
+    final detail = feedbackList.first as Map<String, dynamic>;
+    _showFeedbackDialog(detail);
+  }
+
+  void _showFeedbackDialog(Map<String, dynamic> detail) {
+    final feedback = detail['feedback'] as Map<String, dynamic>?;
+    final status = detail['status'] as String? ?? '';
+    final changedAt = detail['changedAt'] as String? ?? '';
+    final changedBy = detail['changedById'] as Map<String, dynamic>?;
+    final statusColor = _getStatusColor(status);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Status badge
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _translateStatus(status),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _formatDate(changedAt),
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                ],
+              ),
+              if (changedBy != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Oleh: ${changedBy['name'] ?? ''}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+              ],
+              const SizedBox(height: 16),
+
+              // Feedback
+              if (feedback != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.orange),
+                          SizedBox(width: 6),
+                          Text(
+                            'Catatan',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        feedback['description'] ?? '',
+                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+                // Feedback attachments
+                if (feedback['feedbackAttachments'] != null &&
+                    (feedback['feedbackAttachments'] as List).isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Lampiran',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildEvidenceList(
+                    (feedback['feedbackAttachments'] as List).cast<Map<String, dynamic>>(),
+                  ),
+                ],
+              ] else ...[
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'Tidak ada catatan untuk status ini.',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────── BUILD ────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +354,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
-          "Detail Laporan",
+          'Detail Laporan',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -138,151 +363,182 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
-      body: SingleChildScrollView(
+      body: _buildBody(),
+      bottomSheet: _data != null ? _buildBottomAction() : null,
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
+    }
+
+    if (_error != null || _data == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 60, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                _error ?? 'Terjadi kesalahan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _loadDetail,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final data = _data!;
+
+    return RefreshIndicator(
+      onRefresh: _loadDetail,
+      color: AppColors.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Main info section ──
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader(),
+                  _buildHeader(data),
                   const SizedBox(height: 16),
-                  _buildTitleAndDescription(),
+                  _buildTitleAndDescription(data),
                   const SizedBox(height: 16),
-                  _buildTags(),
+                  _buildTags(data),
+                  if ((data['reportEvidences'] as List?)?.isNotEmpty == true) ...[
+                    const SizedBox(height: 20),
+                    _buildEvidenceSection(data),
+                  ],
                   const SizedBox(height: 20),
-                  _buildAttachments(taskData['attachments']),
-                  const SizedBox(height: 20),
-                  _buildLocation(),
+                  _buildLocation(data),
                 ],
               ),
             ),
             const SizedBox(height: 8),
 
+            // ── Status timeline ──
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(20),
               width: double.infinity,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Riwayat Status",
+                    'Riwayat Status',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Ketuk riwayat untuk melihat catatan',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  ),
                   const SizedBox(height: 16),
-                  _buildTimeline(),
+                  _buildTimeline(data),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-
-            // Container(
-            //   color: Colors.white,
-            //   padding: const EdgeInsets.all(20.0),
-            //   width: double.infinity,
-            //   child: Column(
-            //     crossAxisAlignment: CrossAxisAlignment.start,
-            //     children: [
-            //       Text(
-            //         "Komentar (${taskData['comments'].length})",
-            //         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            //       ),
-            //       const SizedBox(height: 16),
-            //       _buildComments(),
-            //     ],
-            //   ),
-            // ),
             const SizedBox(height: 100),
           ],
         ),
       ),
-      bottomSheet: _buildBottomAction(),
     );
   }
 
-  Widget _buildHeader() {
-    final author = taskData['author'];
+  // ──────────────── WIDGETS ────────────────
+
+  Widget _buildHeader(Map<String, dynamic> data) {
+    final author = data['author'] as Map<String, dynamic>?;
+    final authorName = author?['name'] ?? 'Anonim';
+    final photoUrl = author?['url_foto_profil'] as String?;
+    final reportDate = data['report_date'] as String?;
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
+        // Profile photo
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.grey[200],
+          child: photoUrl != null
+              ? ClipOval(
+                  child: FutureBuilder<Uint8List?>(
+                    future: _service.fetchProfilePhotoBytes(photoUrl),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData && snapshot.data != null) {
+                        return Image.memory(snapshot.data!, fit: BoxFit.cover, width: 40, height: 40);
+                      }
+                      return const Icon(Icons.person, size: 20, color: Colors.grey);
+                    },
+                  ),
+                )
+              : const Icon(Icons.person, size: 20, color: Colors.grey),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: NetworkImage(author['photoProfileUrl']),
+            Text(
+              authorName,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  author['name'],
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                Text(
-                  "Dilaporkan pada 12/5/2026 08:30",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
+            Text(
+              reportDate != null ? 'Dilaporkan pada ${_formatDate(reportDate)}' : 'Tanggal tidak tersedia',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],
         ),
-        // Container(
-        //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        //   decoration: BoxDecoration(
-        //     color: Colors.red.withOpacity(0.1),
-        //     borderRadius: BorderRadius.circular(20),
-        //   ),
-        //   child: Row(
-        //     children: [
-        //       const Icon(Icons.favorite, color: Colors.red, size: 16),
-        //       const SizedBox(width: 6),
-        //       Text(
-        //         taskData['likes'].toString(),
-        //         style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-        //       ),
-        //     ],
-        //   ),
-        // )
       ],
     );
   }
 
-  Widget _buildTitleAndDescription() {
+  Widget _buildTitleAndDescription(Map<String, dynamic> data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          taskData['title'],
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            height: 1.3,
-          ),
+          data['title'] ?? '',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, height: 1.3),
         ),
         const SizedBox(height: 12),
         Text(
-          taskData['description'],
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[800],
-            height: 1.6,
-          ),
+          data['description'] ?? '',
+          style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.6),
         ),
       ],
     );
   }
 
-  Widget _buildTags() {
+  Widget _buildTags(Map<String, dynamic> data) {
+    final category = data['category']?['name'] ?? '-';
+    final department = data['department']?['name'] ?? '-';
     return Row(
       children: [
-        _buildChip(Icons.category_outlined, taskData['category']['name']),
+        _buildChip(Icons.category_outlined, category),
         const SizedBox(width: 12),
-        _buildChip(Icons.business_outlined, taskData['department']['name']),
+        _buildChip(Icons.business_outlined, department),
       ],
     );
   }
@@ -300,73 +556,165 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         children: [
           Icon(icon, size: 16, color: Colors.grey[700]),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(fontSize: 13, color: Colors.grey[800], fontWeight: FontWeight.w500),
-          ),
+          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[800], fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 
-  Widget _buildAttachments(List<dynamic> attachments) {
-    if (attachments.isEmpty) return const SizedBox.shrink();
+  // ── Evidence section ──
 
+  Widget _buildEvidenceSection(Map<String, dynamic> data) {
+    final evidences = (data['reportEvidences'] as List).cast<Map<String, dynamic>>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Bukti Laporan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        const Text('Bukti Laporan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: attachments.length,
-            itemBuilder: (context, index) {
-              final file = attachments[index];
-              return Container(
-                margin: const EdgeInsets.only(right: 12),
-                width: 140,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.network(
-                        file['url'],
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stack) => Container(
-                          color: Colors.grey[200],
-                          child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                        ),
-                      ),
-                      if (file['filetype'] == 'video')
-                        Container(
-                          color: Colors.black.withOpacity(0.3),
-                          child: const Center(
-                            child: Icon(Icons.play_circle_fill, color: Colors.white, size: 36),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        _buildEvidenceList(evidences),
       ],
     );
   }
 
-  Widget _buildLocation() {
-    final double lat = taskData['locationLat'];
-    final double long = taskData['locationLong'];
-    final mapCenter = LatLng(lat, long);
+  Widget _buildEvidenceList(List<Map<String, dynamic>> evidences) {
+    return SizedBox(
+      height: 110,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: evidences.length,
+        itemBuilder: (context, index) {
+          final evidence = evidences[index];
+          final fileInfo = evidence['file'] as Map<String, dynamic>;
+          final filetype = fileInfo['filetype'] as String;
+          final evidenceId = evidence['id'] as int;
 
+          return GestureDetector(
+            onTap: () => _onEvidenceTap(evidence),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              width: 130,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                color: const Color(0xFFF4F5F7),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _buildEvidenceCard(filetype, evidenceId, fileInfo),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEvidenceCard(String filetype, int evidenceId, Map<String, dynamic> fileInfo) {
+    switch (filetype) {
+      case 'image':
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            FutureBuilder<Uint8List?>(
+              future: _service.fetchEvidencePreviewBytes(evidenceId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      ),
+                    ),
+                  );
+                }
+                if (snapshot.hasData && snapshot.data != null) {
+                  return Image.memory(snapshot.data!, fit: BoxFit.cover);
+                }
+                return Container(
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                );
+              },
+            ),
+            // Tap affordance overlay
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(
+                  child: Icon(Icons.zoom_in, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case 'video':
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(color: Colors.grey[800]),
+            const Center(
+              child: Icon(Icons.play_circle_fill, color: Colors.white, size: 40),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                color: Colors.black.withOpacity(0.5),
+                child: Center(
+                  child: Text(
+                    fileInfo['name'] ?? 'Video',
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case 'document':
+      default:
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.description_outlined, size: 36, color: AppColors.primary),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                fileInfo['name'] ?? 'Dokumen',
+                style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text('Ketuk untuk preview', style: TextStyle(fontSize: 9, color: Colors.blue)),
+          ],
+        );
+    }
+  }
+
+  // ── Location ──
+
+  Widget _buildLocation(Map<String, dynamic> data) {
+    final double? lat = (data['locationLat'] as num?)?.toDouble();
+    final double? lng = (data['locationLong'] as num?)?.toDouble();
+    if (lat == null || lng == null) return const SizedBox.shrink();
+
+    final mapCenter = LatLng(lat, lng);
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF4F5F7),
@@ -389,16 +737,15 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   child: const Icon(Icons.location_on, color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: const Text(
-                    "Lokasi Kejadian",
+                const Expanded(
+                  child: Text(
+                    'Lokasi Kejadian',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  )
+                  ),
                 ),
               ],
             ),
           ),
-
           ClipRRect(
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
             child: SizedBox(
@@ -423,11 +770,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         width: 40,
                         height: 40,
                         alignment: Alignment.topCenter,
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                          size: 40,
-                        ),
+                        child: const Icon(Icons.location_on, color: Colors.red, size: 40),
                       ),
                     ],
                   ),
@@ -440,165 +783,114 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     );
   }
 
-  Widget _buildTimeline() {
-    List<dynamic> timeline = taskData['statusTimeline'];
+  // ── Timeline ──
+
+  Widget _buildTimeline(Map<String, dynamic> data) {
+    final statusList = (data['reportStatus'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    if (statusList.isEmpty) {
+      return Center(
+        child: Text('Belum ada riwayat status.', style: TextStyle(color: Colors.grey[500])),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: timeline.length,
+      itemCount: statusList.length,
       itemBuilder: (context, index) {
-        final item = timeline[index];
-        final isLast = index == timeline.length - 1;
-        final statusColor = _getStatusColor(item['status']);
+        final item = statusList[index];
+        final isLast = index == statusList.length - 1;
+        final statusColor = _getStatusColor(item['status'] ?? '');
 
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(color: statusColor.withOpacity(0.4), blurRadius: 4),
+        return InkWell(
+          onTap: () => _onStatusTap(item),
+          borderRadius: BorderRadius.circular(8),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Timeline line + dot
+                Column(
+                  children: [
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(color: statusColor.withOpacity(0.4), blurRadius: 4),
+                        ],
+                      ),
+                    ),
+                    if (!isLast)
+                      Expanded(
+                        child: Container(width: 2, color: Colors.grey[300]),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+
+                // Content
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _translateStatus(item['status'] ?? ''),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: statusColor,
+                              ),
+                            ),
+                            Text(
+                              _formatDate(item['created_at'] ?? ''),
+                              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        if (item['author'] != null)
+                          Text(
+                            'Oleh: ${item['author']['name'] ?? ''}',
+                            style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                          ),
+                        const SizedBox(height: 6),
+                        // Tap hint
+                        Row(
+                          children: [
+                            Icon(Icons.touch_app_outlined, size: 13, color: Colors.blue[300]),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Ketuk untuk lihat catatan',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.blue[300],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  if (!isLast)
-                    Expanded(
-                      child: Container(
-                        width: 2,
-                        color: Colors.grey[300],
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 16),
-
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _translateStatus(item['status']),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: statusColor,
-                            ),
-                          ),
-                          Text(
-                            _formatDate(item['changedAt']),
-                            style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Oleh: ${item['changedBy']['name']}",
-                        style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                      ),
-
-                      if (item['feedback'] != null)
-                        Container(
-                          margin: const EdgeInsets.only(top: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange.withOpacity(0.2)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(Icons.info_outline, size: 16, color: Colors.orange),
-                                  SizedBox(width: 6),
-                                  Text("Catatan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.orange)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                item['feedback']['description'],
-                                style: const TextStyle(fontSize: 13, height: 1.4),
-                              ),
-                              if (item['feedback']['attachments'] != null && (item['feedback']['attachments'] as List).isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: _buildAttachments(item['feedback']['attachments']),
-                                )
-                            ],
-                          ),
-                        )
-                    ],
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildComments() {
-    List<dynamic> comments = taskData['comments'];
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: comments.length,
-      separatorBuilder: (context, index) => const Divider(height: 30),
-      itemBuilder: (context, index) {
-        final comment = comments[index];
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundImage: NetworkImage(comment['user']['photoProfileUrl']),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        comment['user']['name'],
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      Text(
-                        _formatDate(comment['createdAt']),
-                        style: TextStyle(color: Colors.grey[500], fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    comment['comment'],
-                    style: TextStyle(fontSize: 13, color: Colors.grey[800], height: 1.4),
-                  ),
-                ],
-              ),
-            )
-          ],
-        );
-      },
-    );
-  }
+  // ── Bottom action ──
 
   Widget _buildBottomAction() {
     return Container(
@@ -617,37 +909,273 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         child: Row(
           children: [
             Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: Color(0xFF00005C)), // Navy Blue
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                child: const Text(
-                  "Tolak",
-                  style: TextStyle(color: Color(0xFF00005C), fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00005C), // Navy Blue
+                  backgroundColor: const Color(0xFF00005C),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   elevation: 0,
                 ),
                 child: const Text(
-                  "Tindak Lanjut",
+                  'Tindak Lanjut',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ──────────────── VIDEO PLAYER DIALOG ────────────────
+
+class _VideoPlayerDialog extends StatefulWidget {
+  final int evidenceId;
+  final String videoUrl;
+  final ReportService service;
+
+  const _VideoPlayerDialog({
+    required this.evidenceId,
+    required this.videoUrl,
+    required this.service,
+  });
+
+  @override
+  State<_VideoPlayerDialog> createState() => _VideoPlayerDialogState();
+}
+
+class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
+  VideoPlayerController? _controller;
+  bool _isLoading = true;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    try {
+      // Build authenticated URL and use network player
+      final uri = Uri.parse(widget.videoUrl);
+      final token = await widget.service.getToken();
+      _controller = VideoPlayerController.networkUrl(
+        uri,
+        httpHeaders: {
+          'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': '69420',
+        },
+      );
+      await _controller!.initialize();
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _controller!.play();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Close button
+          Align(
+            alignment: Alignment.topRight,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(color: Colors.white),
+            )
+          else if (_hasError)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white, size: 50),
+                  SizedBox(height: 12),
+                  Text('Gagal memuat video.', style: TextStyle(color: Colors.white)),
+                ],
+              ),
+            )
+          else if (_controller != null && _controller!.value.isInitialized) ...[
+            AspectRatio(
+              aspectRatio: _controller!.value.aspectRatio,
+              child: VideoPlayer(_controller!),
+            ),
+            // Controls
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _controller!.value.isPlaying ? _controller!.pause() : _controller!.play();
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────── PDF VIEWER DIALOG ────────────────
+
+class _PdfViewerDialog extends StatefulWidget {
+  final int evidenceId;
+  final ReportService service;
+
+  const _PdfViewerDialog({
+    required this.evidenceId,
+    required this.service,
+  });
+
+  @override
+  State<_PdfViewerDialog> createState() => _PdfViewerDialogState();
+}
+
+class _PdfViewerDialogState extends State<_PdfViewerDialog> {
+  String? _tempFilePath;
+  bool _isLoading = true;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPdf();
+  }
+
+  Future<void> _loadPdf() async {
+    try {
+      final bytes = await widget.service.fetchEvidencePreviewBytes(widget.evidenceId);
+      if (bytes == null || bytes.isEmpty) throw Exception('Empty response');
+
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/preview_${widget.evidenceId}.pdf');
+      await file.writeAsBytes(bytes);
+
+      if (mounted) {
+        setState(() {
+          _tempFilePath = file.path;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // Clean up temp file
+    if (_tempFilePath != null) {
+      File(_tempFilePath!).deleteSync();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.description_outlined, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Preview Dokumen',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 22),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+
+          // Content
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _hasError
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline, size: 50, color: Colors.grey[400]),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Gagal memuat dokumen.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      )
+                    : PDFView(
+                        filePath: _tempFilePath!,
+                        enableSwipe: true,
+                        swipeHorizontal: false,
+                        autoSpacing: true,
+                        pageFling: true,
+                        fitPolicy: FitPolicy.BOTH,
+                      ),
+          ),
+        ],
       ),
     );
   }
