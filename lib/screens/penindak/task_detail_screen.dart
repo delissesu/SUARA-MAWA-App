@@ -364,8 +364,17 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: _buildBody(),
-      bottomSheet: _data != null ? _buildBottomAction() : null,
+      bottomSheet: _shouldShowBottomAction() ? _buildBottomAction() : null,
     );
+  }
+
+  bool _shouldShowBottomAction() {
+    if (_data == null) return false;
+    final statusList = (_data!['reportStatus'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    if (statusList.isEmpty) return true;
+    
+    final latestStatus = statusList.last['status'] as String?;
+    return latestStatus != 'resolved' && latestStatus != 'completed';
   }
 
   Widget _buildBody() {
