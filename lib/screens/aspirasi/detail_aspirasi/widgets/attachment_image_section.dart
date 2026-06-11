@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
 
 class AttachmentImageSection extends StatelessWidget {
   /// Pass a network URL, asset path, or null to show a placeholder.
@@ -8,17 +9,48 @@ class AttachmentImageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (imageUrl == null) {
+      return _Placeholder();
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: imageUrl != null
-            ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _Placeholder(),
-              )
-            : _Placeholder(),
+        child: FutureBuilder<String?>(
+          future: AuthService().getToken(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            }
+
+            final token = snapshot.data;
+            final headers = <String, String>{
+              'ngrok-skip-browser-warning': '69420',
+            };
+            if (token != null) {
+              headers['Authorization'] = 'Bearer $token';
+            }
+
+            debugPrint('[AttachmentImageSection] Loading Image: $imageUrl with headers: $headers');
+
+            return Image.network(
+              imageUrl!,
+              fit: BoxFit.cover,
+              headers: headers,
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint('[AttachmentImageSection] Error loading image: $error');
+                return _Placeholder();
+              },
+            );
+          },
+        ),
       ),
     );
   }

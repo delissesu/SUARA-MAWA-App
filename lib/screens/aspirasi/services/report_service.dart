@@ -100,16 +100,28 @@ class ReportService {
   // Report detail
 
   /// `POST /report/detail` — body: `{reportId: int}`
+  /// `POST /report/detail` — body: `{reportId: int}`
   Future<ReportDetail?> getReportDetail(int reportId) async {
     final options = await _authOptions();
-    final response = await _dio.post(
-      '/report/detail',
-      data: {'reportId': reportId},
-      options: options,
-    );
-    final body = response.data as Map<String, dynamic>;
-    if (body['status'] == 'success' && body['data'] != null) {
-      return ReportDetail.fromJson(body['data'] as Map<String, dynamic>);
+    try {
+      final response = await _dio.post(
+        '/report/detail',
+        data: {'reportId': reportId},
+        options: options,
+      );
+      debugPrint('[ReportService.getReportDetail] rawResponse: ${response.data}');
+      final body = response.data as Map<String, dynamic>;
+      if (body['status'] == 'success' && body['data'] != null) {
+        final detail = ReportDetail.fromJson(body['data'] as Map<String, dynamic>);
+        debugPrint('[ReportService.getReportDetail] parsed detail. ID: ${detail.id}, evidences count: ${detail.evidences.length}');
+        for (var ev in detail.evidences) {
+          debugPrint('  - Evidence ID: ${ev.id}, File: ${ev.file?.name}, Type: ${ev.file?.filetype}');
+        }
+        return detail;
+      }
+    } catch (e, stack) {
+      debugPrint('[ReportService.getReportDetail] Error: $e');
+      debugPrint('[ReportService.getReportDetail] Stack: $stack');
     }
     return null;
   }

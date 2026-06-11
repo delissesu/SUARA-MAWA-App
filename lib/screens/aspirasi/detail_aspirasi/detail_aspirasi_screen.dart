@@ -89,12 +89,18 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
 
     // Find the first image evidence for the header attachment
     String? attachmentUrl;
+    debugPrint('[DetailAspirasiScreen] mapping detail, total evidences: ${detail.evidences.length}');
+    for (var ev in detail.evidences) {
+      debugPrint('  - Evidence ID: ${ev.id}, File: ${ev.file}, filetype: ${ev.file?.filetype}');
+    }
     final imageEvidences = detail.evidences
         .where((e) => e.file?.filetype == 'image')
         .toList();
+    debugPrint('[DetailAspirasiScreen] image evidences count: ${imageEvidences.length}');
     if (imageEvidences.isNotEmpty) {
       attachmentUrl =
           _reportService.evidencePreviewUrl(imageEvidences.first.id);
+      debugPrint('[DetailAspirasiScreen] Mapped attachmentUrl: $attachmentUrl');
     }
 
     return DetailAspirasiModel(
