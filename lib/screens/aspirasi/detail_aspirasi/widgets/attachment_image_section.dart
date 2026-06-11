@@ -38,14 +38,11 @@ class AttachmentImageSection extends StatelessWidget {
               headers['Authorization'] = 'Bearer $token';
             }
 
-            debugPrint('[AttachmentImageSection] Loading Image: $imageUrl with headers: $headers');
-
             return Image.network(
               imageUrl!,
               fit: BoxFit.cover,
               headers: headers,
               errorBuilder: (context, error, stackTrace) {
-                debugPrint('[AttachmentImageSection] Error loading image: $error');
                 return _Placeholder();
               },
             );

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
 
@@ -9,8 +8,6 @@ import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
 /// Consumes endpoints documented in `SuaraMawaAPI.txt` under the
 /// `/mahasiswa/*` and `/report/*` groups.
 class ReportService {
-  static const String _traceTag = 'ReportService.createReport';
-
   static const String baseUrl = String.fromEnvironment(
     'SERVER_BASE_URL',
     defaultValue: '',
@@ -100,7 +97,6 @@ class ReportService {
   // Report detail
 
   /// `POST /report/detail` — body: `{reportId: int}`
-  /// `POST /report/detail` — body: `{reportId: int}`
   Future<ReportDetail?> getReportDetail(int reportId) async {
     final options = await _authOptions();
     try {
@@ -109,20 +105,11 @@ class ReportService {
         data: {'reportId': reportId},
         options: options,
       );
-      debugPrint('[ReportService.getReportDetail] rawResponse: ${response.data}');
       final body = response.data as Map<String, dynamic>;
       if (body['status'] == 'success' && body['data'] != null) {
-        final detail = ReportDetail.fromJson(body['data'] as Map<String, dynamic>);
-        debugPrint('[ReportService.getReportDetail] parsed detail. ID: ${detail.id}, evidences count: ${detail.evidences.length}');
-        for (var ev in detail.evidences) {
-          debugPrint('  - Evidence ID: ${ev.id}, File: ${ev.file?.name}, Type: ${ev.file?.filetype}');
-        }
-        return detail;
+        return ReportDetail.fromJson(body['data'] as Map<String, dynamic>);
       }
-    } catch (e, stack) {
-      debugPrint('[ReportService.getReportDetail] Error: $e');
-      debugPrint('[ReportService.getReportDetail] Stack: $stack');
-    }
+    } catch (_) {}
     return null;
   }
 
@@ -150,10 +137,6 @@ class ReportService {
   }
 
   // Create report
-
-  void _trace(String message) {
-    debugPrint('[$_traceTag] $message');
-  }
 
   DioMediaType _contentTypeForFile(String fileName) {
     final extension = fileName.split('.').last.toLowerCase();
@@ -187,64 +170,10 @@ class ReportService {
     return path.replaceAll('\\', '/').split('/').last;
   }
 
-  String _extensionFromFileName(String fileName) {
-    final dotIndex = fileName.lastIndexOf('.');
-    if (dotIndex == -1 || dotIndex == fileName.length - 1) {
-      return '';
-    }
-
-    return fileName.substring(dotIndex + 1).toLowerCase();
-  }
-
-  String _formatBytes(int bytes) {
-    const kb = 1024;
-    const mb = kb * 1024;
-    if (bytes >= mb) {
-      return '${(bytes / mb).toStringAsFixed(2)}MB';
-    }
-    if (bytes >= kb) {
-      return '${(bytes / kb).toStringAsFixed(2)}KB';
-    }
-    return '${bytes}B';
-  }
-
-  String _stringifyForLog(Object? value, {int maxLength = 4000}) {
-    final text = value?.toString() ?? 'null';
-    if (text.length <= maxLength) {
-      return text;
-    }
-
-    return '${text.substring(0, maxLength)}... <truncated ${text.length - maxLength} chars>';
-  }
-
-  Map<String, Object?> _headersForLog(Map<String, dynamic>? headers) {
-    if (headers == null) return {};
-
-    return headers.map((key, value) {
-      if (key.toLowerCase() == 'authorization') {
-        final token = value?.toString() ?? '';
-        return MapEntry(
-          key,
-          token.isEmpty ? '<empty>' : '<redacted length=${token.length}>',
-        );
-      }
-
-      return MapEntry(key, value);
-    });
-  }
-
-  Map<String, Object?> _fieldLogValue(MapEntry<String, String> field) {
-    if (field.key == 'title' || field.key == 'description') {
-      return {'key': field.key, 'length': field.value.length};
-    }
-
-    return {'key': field.key, 'value': field.value};
-  }
-
   /// `POST /mahasiswa/report/create`
   ///
   /// Uses multipart/form-data for file uploads. [files] is a list of
-  /// image/video [File] objects. [names] must have the same length as [files].
+  /// image/video [File] objects.
   Future<(bool, String)> createReport({
     required String title,
     required String description,
@@ -256,33 +185,9 @@ class ReportService {
     required int categoryId,
     required List<File> files,
   }) async {
-    final traceId = DateTime.now().microsecondsSinceEpoch.toString();
-    final stopwatch = Stopwatch()..start();
-
     try {
-      _trace(
-        '[$traceId] START endpoint=/mahasiswa/report/create baseUrl="$baseUrl"',
-      );
-      _trace(
-        '[$traceId] input '
-        'titleLength=${title.length}, '
-        'descriptionLength=${description.length}, '
-        'locationLat=$locationLat, '
-        'locationLong=$locationLong, '
-        'locationDetailPresent=${locationDetail != null}, '
-        'isPublic=$isPublic, '
-        'departmentId=$departmentId, '
-        'categoryId=$categoryId, '
-        'filesLength=${files.length}',
-      );
-
       final options = await _authOptions();
       options.contentType = 'multipart/form-data';
-      _trace(
-        '[$traceId] authOptions '
-        'contentType=${options.contentType}, '
-        'headers=${_headersForLog(options.headers)}',
-      );
 
       final Map<String, dynamic> dataMap = {
         'title': title,
@@ -296,44 +201,13 @@ class ReportService {
       if (locationDetail != null) {
         dataMap['locationDetail'] = locationDetail;
       }
-      _trace(
-        '[$traceId] dataMapPrepared '
-        'keys=${dataMap.keys.toList()}, '
-        'titleLength=${title.length}, '
-        'descriptionLength=${description.length}, '
-        'locationLat=${dataMap['locationLat']}, '
-        'locationLong=${dataMap['locationLong']}, '
-        'isPublic=${dataMap['isPublic']}, '
-        'departmentId=${dataMap['departmentId']}, '
-        'categoryId=${dataMap['categoryId']}',
-      );
 
       final formData = FormData.fromMap(dataMap);
-      _trace(
-        '[$traceId] formDataInitial '
-        'boundary=${formData.boundary}, '
-        'fields=${formData.fields.map(_fieldLogValue).toList()}, '
-        'files=${formData.files.length}',
-      );
 
       for (var i = 0; i < files.length; i++) {
         final file = files[i];
         final fileName = _fileNameFromPath(file.path);
-        final extension = _extensionFromFileName(fileName);
-        final exists = await file.exists();
-        final sizeInBytes = exists ? await file.length() : -1;
         final contentType = _contentTypeForFile(fileName);
-
-        _trace(
-          '[$traceId] file[$i] beforeMultipart '
-          'path="${file.path}", '
-          'fileName="$fileName", '
-          'extension="$extension", '
-          'exists=$exists, '
-          'sizeBytes=$sizeInBytes, '
-          'size=${exists ? _formatBytes(sizeInBytes) : '<missing>'}, '
-          'contentType=$contentType',
-        );
 
         formData.files.add(
           MapEntry(
@@ -349,73 +223,28 @@ class ReportService {
         // even when only one attachment is uploaded.
         final nameFieldKey = 'names[$i]';
         formData.fields.add(MapEntry(nameFieldKey, fileName));
-        _trace(
-          '[$traceId] file[$i] addedToFormData '
-          'fieldName=files, nameFieldKey=$nameFieldKey, namesField="$fileName"',
-        );
       }
-      _trace(
-        '[$traceId] formDataFinal '
-        'fields=${formData.fields.map(_fieldLogValue).toList()}, '
-        'files=${formData.files.map((entry) => {'key': entry.key, 'fileName': entry.value.filename, 'contentType': entry.value.contentType.toString(), 'length': entry.value.length}).toList()}',
-      );
 
-      _trace('[$traceId] POST start');
       final response = await _dio.post(
         '/mahasiswa/report/create',
         data: formData,
         options: options,
       );
-      _trace(
-        '[$traceId] POST response '
-        'elapsedMs=${stopwatch.elapsedMilliseconds}, '
-        'statusCode=${response.statusCode}, '
-        'statusMessage=${response.statusMessage}, '
-        'responseType=${response.data.runtimeType}, '
-        'headers=${response.headers.map}, '
-        'data=${_stringifyForLog(response.data)}',
-      );
 
       final body = response.data as Map<String, dynamic>;
       final success = body['status'] == 'success';
       final message = _messageFromResponseData(body);
-      _trace('[$traceId] parsedResponse success=$success message="$message"');
       return (success, message);
     } on DioException catch (e) {
       final responseMessage = _messageFromResponseData(e.response?.data);
-      _trace(
-        '[$traceId] DIO_EXCEPTION '
-        'elapsedMs=${stopwatch.elapsedMilliseconds}, '
-        'type=${e.type}, '
-        'message=${e.message}, '
-        'error=${e.error}, '
-        'requestMethod=${e.requestOptions.method}, '
-        'requestUri=${e.requestOptions.uri}, '
-        'requestContentType=${e.requestOptions.contentType}, '
-        'requestHeaders=${_headersForLog(e.requestOptions.headers)}, '
-        'responseStatusCode=${e.response?.statusCode}, '
-        'responseStatusMessage=${e.response?.statusMessage}, '
-        'responseHeaders=${e.response?.headers.map}, '
-        'responseData=${_stringifyForLog(e.response?.data)}',
-      );
-      _trace('[$traceId] DIO_STACK ${e.stackTrace}');
       return (
         false,
         responseMessage.isNotEmpty
             ? responseMessage
             : e.message ?? 'Unknown error',
       );
-    } catch (e, stackTrace) {
-      _trace(
-        '[$traceId] CLIENT_EXCEPTION '
-        'elapsedMs=${stopwatch.elapsedMilliseconds}, '
-        'error=$e',
-      );
-      _trace('[$traceId] CLIENT_STACK $stackTrace');
+    } catch (e) {
       return (false, 'Client error: $e');
-    } finally {
-      stopwatch.stop();
-      _trace('[$traceId] END elapsedMs=${stopwatch.elapsedMilliseconds}');
     }
   }
 }
