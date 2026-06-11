@@ -15,6 +15,26 @@ enum AspirasiStatus {
     };
   }
 
+  /// Maps this UI enum to the backend status string(s).
+  List<String> get apiValues {
+    return switch (this) {
+      AspirasiStatus.all => [],
+      AspirasiStatus.verification => ['pending', 'revision'],
+      AspirasiStatus.inProgress => ['in_progress'],
+      AspirasiStatus.done => ['resolved', 'rejected'],
+    };
+  }
+
+  /// Returns the matching [AspirasiStatus] for a backend status string.
+  static AspirasiStatus fromApiStatus(String? apiStatus) {
+    return switch (apiStatus?.toLowerCase()) {
+      'pending' || 'revision' => AspirasiStatus.verification,
+      'in_progress' => AspirasiStatus.inProgress,
+      'resolved' || 'rejected' => AspirasiStatus.done,
+      _ => AspirasiStatus.verification,
+    };
+  }
+
   Color get badgeBackgroundColor {
     return switch (this) {
       AspirasiStatus.all => const Color(0xFF00BFA5),
@@ -53,6 +73,7 @@ enum AspirasiStatus {
 }
 
 class AspirasiItem {
+  final int reportId;
   final String id;
   final String title;
   final String description;
@@ -61,6 +82,7 @@ class AspirasiItem {
   final AspirasiStatus status;
 
   const AspirasiItem({
+    required this.reportId,
     required this.id,
     required this.title,
     required this.description,
@@ -69,34 +91,3 @@ class AspirasiItem {
     required this.status,
   });
 }
-
-/// Dummy data — replace with API response from Dio
-final List<AspirasiItem> dummyAspirations = [
-  const AspirasiItem(
-    id: 'ASP-001',
-    title: 'Upgrade Library Wi-Fi Infrastructure',
-    description:
-        'The current internet connection in the main library building drops constantly during peak...',
-    category: 'Facilities',
-    dateLabel: 'Oct 24, 2023',
-    status: AspirasiStatus.inProgress,
-  ),
-  const AspirasiItem(
-    id: 'ASP-002',
-    title: 'Extend Cafeteria Operating Hours',
-    description:
-        'Evening students have limited dining options on campus after 7 PM. Requesting to keep at leas...',
-    category: 'Services',
-    dateLabel: 'Oct 20, 2023',
-    status: AspirasiStatus.verification,
-  ),
-  const AspirasiItem(
-    id: 'ASP-003',
-    title: 'Fix Broken Projector in Room A302',
-    description:
-        'The HDMI port on the ceiling projector is loose, causing screen flickering during lectures.',
-    category: 'Academic',
-    dateLabel: 'Sep 15, 2023',
-    status: AspirasiStatus.done,
-  ),
-];

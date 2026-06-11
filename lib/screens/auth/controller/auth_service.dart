@@ -445,6 +445,14 @@ class AuthService {
         }
         break;
       default:
+        if (code.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error: $code"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
         break;
     }
   }

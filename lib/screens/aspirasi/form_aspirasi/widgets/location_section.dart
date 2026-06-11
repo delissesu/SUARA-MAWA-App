@@ -6,11 +6,13 @@ import '../components/section_card.dart';
 class LocationSection extends StatefulWidget {
   final LatLng? selectedLocation;
   final VoidCallback? onUseCurrentGps;
+  final bool isFetchingGps;
 
   const LocationSection({
     super.key,
     this.selectedLocation,
     this.onUseCurrentGps,
+    this.isFetchingGps = false,
   });
 
   @override
@@ -33,6 +35,16 @@ class _LocationSectionState extends State<LocationSection> {
   void dispose() {
     _mapController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant LocationSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // When the location changes, move the map to the new center.
+    if (widget.selectedLocation != null &&
+        widget.selectedLocation != oldWidget.selectedLocation) {
+      _mapController.move(widget.selectedLocation!, 15);
+    }
   }
 
   LatLng get _center => widget.selectedLocation ?? _defaultCenter;
@@ -87,7 +99,10 @@ class _LocationSectionState extends State<LocationSection> {
                     left: 0,
                     right: 0,
                     child: Center(
-                      child: _GpsButton(onPressed: widget.onUseCurrentGps),
+                      child: _GpsButton(
+                        onPressed: widget.onUseCurrentGps,
+                        isFetching: widget.isFetchingGps,
+                      ),
                     ),
                   ),
                 ],
@@ -95,15 +110,27 @@ class _LocationSectionState extends State<LocationSection> {
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            'Pinpoint the exact location of the observation.',
-            style: TextStyle(
-              fontFamily: 'PublicSans',
-              fontWeight: FontWeight.w400,
-              fontSize: 12,
-              color: Colors.grey.shade600,
+          if (widget.selectedLocation != null)
+            Text(
+              'Lat: ${widget.selectedLocation!.latitude.toStringAsFixed(6)}, '
+              'Lng: ${widget.selectedLocation!.longitude.toStringAsFixed(6)}',
+              style: TextStyle(
+                fontFamily: 'PublicSans',
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                color: Colors.grey.shade700,
+              ),
+            )
+          else
+            Text(
+              'Pinpoint the exact location of the observation.',
+              style: TextStyle(
+                fontFamily: 'PublicSans',
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -112,13 +139,14 @@ class _LocationSectionState extends State<LocationSection> {
 
 class _GpsButton extends StatelessWidget {
   final VoidCallback? onPressed;
+  final bool isFetching;
 
-  const _GpsButton({this.onPressed});
+  const _GpsButton({this.onPressed, this.isFetching = false});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: isFetching ? null : onPressed,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -132,14 +160,24 @@ class _GpsButton extends StatelessWidget {
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.my_location_rounded, size: 16, color: Color(0xFF1A2B5F)),
-            SizedBox(width: 6),
+            if (isFetching)
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(Color(0xFF1A2B5F)),
+                ),
+              )
+            else
+              const Icon(Icons.my_location_rounded, size: 16, color: Color(0xFF1A2B5F)),
+            const SizedBox(width: 6),
             Text(
-              'Use Current GPS',
-              style: TextStyle(
+              isFetching ? 'Getting Location...' : 'Use Current GPS',
+              style: const TextStyle(
                 fontFamily: 'PublicSans',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,

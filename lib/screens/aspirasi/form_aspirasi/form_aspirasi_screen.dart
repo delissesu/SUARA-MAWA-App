@@ -1,4 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
+import 'package:suara_mawa/screens/aspirasi/services/report_service.dart';
 import 'widgets/form_app_bar.dart';
 import 'widgets/form_page_header.dart';
 import 'widgets/aspiration_details_section.dart';
@@ -17,9 +23,25 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final ReportService _reportService = ReportService();
+  final ImagePicker _imagePicker = ImagePicker();
 
-  String? _selectedCategory;
+  int? _selectedCategoryId;
+  int? _selectedDepartmentId;
   bool _isSubmitting = false;
+  bool _isLoadingLookups = true;
+  LatLng? _selectedLocation;
+  bool _isFetchingGps = false;
+
+  List<ReportCategory> _categories = [];
+  List<ReportDepartment> _departments = [];
+  List<File> _attachments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLookupData();
+  }
 
   @override
   void dispose() {
@@ -28,54 +50,170 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
     super.dispose();
   }
 
+  Future<void> _loadLookupData() async {
+    try {
+      final results = await Future.wait([
+        _reportService.getAllCategories(),
+        _reportService.getAllDepartments(),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _categories = results[0] as List<ReportCategory>;
+        _departments = results[1] as List<ReportDepartment>;
+        _isLoadingLookups = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingLookups = false);
+    }
+  }
+
   Future<void> _handleSubmit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    if (_selectedCategoryId == null) {
+      _showSnackBar('Please select a category', isError: true);
+      return;
+    }
+    if (_selectedDepartmentId == null) {
+      _showSnackBar('Please select a department', isError: true);
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
-    // TODO: Replace with actual API call via Dio
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final (success, message) = await _reportService.createReport(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        locationLat: _selectedLocation?.latitude ?? 0.0,
+        locationLong: _selectedLocation?.longitude ?? 0.0,
+        locationDetail: null,
+        isPublic: true,
+        departmentId: _selectedDepartmentId!,
+        categoryId: _selectedCategoryId!,
+        files: _attachments,
+      );
 
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
 
+      if (success) {
+        _showSnackBar('Aspiration submitted successfully!');
+        Navigator.of(context).maybePop();
+      } else {
+        _showSnackBar(message.isNotEmpty ? message : 'Failed to submit', isError: true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      _showSnackBar('An error occurred. Please try again.', isError: true);
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text(
-          'Aspiration submitted successfully!',
-          style: TextStyle(fontFamily: 'PublicSans'),
+        content: Text(
+          message,
+          style: const TextStyle(fontFamily: 'PublicSans'),
         ),
-        backgroundColor: const Color(0xFF1B4332),
+        backgroundColor: isError ? Colors.red.shade700 : const Color(0xFF1B4332),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
-
-    Navigator.of(context).maybePop();
   }
 
-  void _handleUseCurrentGps() {
-    // TODO: Implement Geolocator to get current position
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Fetching GPS location...',
-          style: TextStyle(fontFamily: 'PublicSans'),
+  Future<void> _handleUseCurrentGps() async {
+    setState(() => _isFetchingGps = true);
+
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        _showSnackBar('Location services are disabled.', isError: true);
+        setState(() => _isFetchingGps = false);
+        return;
+      }
+
+      // Check permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (!mounted) return;
+          _showSnackBar('Location permission denied.', isError: true);
+          setState(() => _isFetchingGps = false);
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        _showSnackBar('Location permissions are permanently denied.', isError: true);
+        setState(() => _isFetchingGps = false);
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
         ),
-        backgroundColor: const Color(0xFF1A2B5F),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _selectedLocation = LatLng(position.latitude, position.longitude);
+        _isFetchingGps = false;
+      });
+      _showSnackBar('Location captured successfully!');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isFetchingGps = false);
+      _showSnackBar('Could not get GPS location.', isError: true);
+    }
   }
 
-  void _handleTakePhoto() {
-    // TODO: Implement image_picker with ImageSource.camera
+  Future<void> _handleTakePhoto() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+      if (image != null && mounted) {
+        setState(() => _attachments.add(File(image.path)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar('Could not open camera.', isError: true);
+    }
   }
 
-  void _handleUploadGallery() {
-    // TODO: Implement image_picker with ImageSource.gallery
+  Future<void> _handleUploadGallery() async {
+    try {
+      final List<XFile> images = await _imagePicker.pickMultiImage(
+        imageQuality: 80,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+      if (images.isNotEmpty && mounted) {
+        setState(() {
+          _attachments.addAll(images.map((img) => File(img.path)));
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar('Could not open gallery.', isError: true);
+    }
+  }
+
+  void _handleRemoveAttachment(int index) {
+    setState(() => _attachments.removeAt(index));
   }
 
   @override
@@ -83,39 +221,52 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: const FormAppBar(),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const FormPageHeader(),
-              const SizedBox(height: 24),
-              AspirationDetailsSection(
-                titleController: _titleController,
-                descriptionController: _descriptionController,
-                selectedCategory: _selectedCategory,
-                onCategoryChanged: (value) =>
-                    setState(() => _selectedCategory = value),
+      body: _isLoadingLookups
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FormPageHeader(),
+                    const SizedBox(height: 24),
+                    AspirationDetailsSection(
+                      titleController: _titleController,
+                      descriptionController: _descriptionController,
+                      selectedCategoryId: _selectedCategoryId,
+                      categories: _categories,
+                      onCategoryChanged: (value) =>
+                          setState(() => _selectedCategoryId = value),
+                      selectedDepartmentId: _selectedDepartmentId,
+                      departments: _departments,
+                      onDepartmentChanged: (value) =>
+                          setState(() => _selectedDepartmentId = value),
+                    ),
+                    const SizedBox(height: 16),
+                    LocationSection(
+                      selectedLocation: _selectedLocation,
+                      onUseCurrentGps: _handleUseCurrentGps,
+                      isFetchingGps: _isFetchingGps,
+                    ),
+                    const SizedBox(height: 16),
+                    AttachmentsSection(
+                      onTakePhoto: _handleTakePhoto,
+                      onUploadGallery: _handleUploadGallery,
+                      attachments: _attachments,
+                      onRemoveAttachment: _handleRemoveAttachment,
+                    ),
+                    const SizedBox(height: 32),
+                    FormActionButtons(
+                      isLoading: _isSubmitting,
+                      onSubmit: _handleSubmit,
+                      onCancel: () => Navigator.of(context).maybePop(),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              LocationSection(onUseCurrentGps: _handleUseCurrentGps),
-              const SizedBox(height: 16),
-              AttachmentsSection(
-                onTakePhoto: _handleTakePhoto,
-                onUploadGallery: _handleUploadGallery,
-              ),
-              const SizedBox(height: 32),
-              FormActionButtons(
-                isLoading: _isSubmitting,
-                onSubmit: _handleSubmit,
-                onCancel: () => Navigator.of(context).maybePop(),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

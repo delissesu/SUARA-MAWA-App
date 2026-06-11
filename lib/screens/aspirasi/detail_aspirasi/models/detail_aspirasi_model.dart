@@ -18,6 +18,17 @@ enum DetailStatus {
     };
   }
 
+  /// Maps a backend status string to this UI enum.
+  static DetailStatus fromApiStatus(String apiStatus) {
+    return switch (apiStatus.toLowerCase()) {
+      'pending' => DetailStatus.submitted,
+      'revision' => DetailStatus.underReview,
+      'in_progress' => DetailStatus.inProgress,
+      'resolved' || 'rejected' => DetailStatus.resolved,
+      _ => DetailStatus.submitted,
+    };
+  }
+
   Color get activeIconBg {
     return switch (this) {
       DetailStatus.submitted => const Color(0xFF1A2B5F),
@@ -85,8 +96,11 @@ class DetailAspirasiModel {
   final String? attachmentImagePath; // null = use placeholder
   final String detailDescription;
   final String locationAddress;
+  final double? locationLat;
+  final double? locationLong;
   final List<TimelineStep> timeline;
   final OfficialResponse? officialResponse;
+  final List<int> evidenceIds;
 
   const DetailAspirasiModel({
     required this.aspirationId,
@@ -97,59 +111,10 @@ class DetailAspirasiModel {
     this.attachmentImagePath,
     required this.detailDescription,
     required this.locationAddress,
+    this.locationLat,
+    this.locationLong,
     required this.timeline,
     this.officialResponse,
+    this.evidenceIds = const [],
   });
 }
-
-/// Dummy data — replace with API response from Dio
-final DetailAspirasiModel dummyDetailAspirasi = DetailAspirasiModel(
-  aspirationId: 'ASP-2023-8942',
-  category: 'Infrastructure',
-  dateLabel: 'Oct 24, 2023',
-  title: 'Severe Potholes on Main Street Intersection',
-  currentStatus: DetailStatus.inProgress,
-  detailDescription:
-      'There are several large, deep potholes that have developed on Main Street, '
-      'specifically right before the crosswalk at the intersection with Oak Avenue. '
-      'These have been getting progressively worse over the last two weeks due to the heavy rains.\n\n'
-      'They are currently causing significant disruption to traffic flow as cars are swerving '
-      'into the adjacent lane to avoid them. Furthermore, they pose a severe hazard to cyclists '
-      'and electric scooters using the designated bike lane nearby. Immediate patch work is requested '
-      'before further damage to vehicles occurs.',
-  locationAddress: 'Intersection of Main St. & Oak Ave, Downtown District.',
-  timeline: [
-    TimelineStep(
-      status: DetailStatus.submitted,
-      description: 'Aspiration received by the system.',
-      dateTime: 'Oct 24, 2023 · 09:15 AM',
-      isPast: true,
-    ),
-    TimelineStep(
-      status: DetailStatus.underReview,
-      description: 'Assigned to Department of Public Works.',
-      dateTime: 'Oct 25, 2023 · 10:30 AM',
-      isPast: true,
-    ),
-    TimelineStep(
-      status: DetailStatus.inProgress,
-      description:
-          'Maintenance crew dispatched to location for initial assessment and temporary patching.',
-      dateTime: 'Oct 26, 2023 · 08:00 AM',
-      isActive: true,
-    ),
-    TimelineStep(
-      status: DetailStatus.resolved,
-      description: 'Awaiting final confirmation of permanent repair.',
-    ),
-  ],
-  officialResponse: OfficialResponse(
-    responderName: 'Public Works Dept.',
-    timeAgo: '2 days ago',
-    avatarLabel: 'PW',
-    message:
-        'Thank you for bringing this to our attention. Our assessment team has reviewed the location. '
-        'Due to recent weather, priority patching is scheduled for this week. A full road resurfacing '
-        'for that block is planned for Q2 next year.',
-  ),
-);

@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/components/activity_card.dart';
+import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
 
 class RecentActivitySection extends StatelessWidget {
   final VoidCallback? onViewAll;
+  final List<ReportListItem> recentItems;
+  final bool isLoading;
 
-  const RecentActivitySection({super.key, this.onViewAll});
+  const RecentActivitySection({
+    super.key,
+    this.onViewAll,
+    this.recentItems = const [],
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,32 +51,104 @@ class RecentActivitySection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        const ActivityCard(
-          iconBackgroundColor: Color(0xFFB2EBF2),
-          icon: Icons.build_outlined,
-          iconColor: Color(0xFF00838F),
-          title: 'Broken AC in Room 302',
-          timeAgo: '2h ago',
-          description: 'The air conditioning unit in classroom ...',
-          statusLabel: 'Pending Review',
-          statusColor: Color(0xFF5C6B8A),
-          statusBgColor: Color(0xFFEDEEF2),
-          statusIcon: Icons.assignment_late_outlined,
-        ),
-        const SizedBox(height: 12),
-        const ActivityCard(
-          iconBackgroundColor: Color(0xFF1B4332),
-          icon: Icons.menu_book_outlined,
-          iconColor: Color(0xFF52B788),
-          title: 'Library Extended Hours ...',
-          timeAgo: 'Yesterday',
-          description: 'Requesting extended library hours duri...',
-          statusLabel: 'Processed',
-          statusColor: Color(0xFF00838F),
-          statusBgColor: Color(0xFFB2EBF2),
-          statusIcon: Icons.sync_outlined,
-        ),
+        if (isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (recentItems.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.inbox_outlined, size: 40, color: Colors.grey.shade400),
+                const SizedBox(height: 8),
+                Text(
+                  'No recent activity',
+                  style: TextStyle(
+                    fontFamily: 'PublicSans',
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...recentItems.asMap().entries.map((entry) {
+            final item = entry.value;
+            final statusLabel = _formatStatus(item.latestStatus);
+            final statusColors = _statusColors(item.latestStatus);
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: entry.key < recentItems.length - 1 ? 12 : 0),
+              child: ActivityCard(
+                iconBackgroundColor: statusColors.$3,
+                icon: _categoryIcon(item.categoriesName),
+                iconColor: statusColors.$2,
+                title: item.title,
+                timeAgo: item.categoriesName,
+                description: item.description,
+                statusLabel: statusLabel,
+                statusColor: statusColors.$1,
+                statusBgColor: statusColors.$3,
+                statusIcon: _statusIcon(item.latestStatus),
+              ),
+            );
+          }),
       ],
     );
+  }
+
+  String _formatStatus(String? status) {
+    return switch (status?.toLowerCase()) {
+      'pending' => 'Pending Review',
+      'in_progress' => 'In Progress',
+      'resolved' => 'Resolved',
+      'revision' => 'Revision',
+      'rejected' => 'Rejected',
+      _ => 'Pending Review',
+    };
+  }
+
+  (Color, Color, Color) _statusColors(String? status) {
+    return switch (status?.toLowerCase()) {
+      'pending' => (const Color(0xFF5C6B8A), const Color(0xFF5C6B8A), const Color(0xFFEDEEF2)),
+      'in_progress' => (const Color(0xFF00838F), const Color(0xFF00838F), const Color(0xFFB2EBF2)),
+      'resolved' => (const Color(0xFF52B788), const Color(0xFF52B788), const Color(0xFF1B4332)),
+      'revision' => (const Color(0xFFFF9800), const Color(0xFFFF9800), const Color(0xFFFFF3E0)),
+      'rejected' => (const Color(0xFFE53935), const Color(0xFFE53935), const Color(0xFFFFEBEE)),
+      _ => (const Color(0xFF5C6B8A), const Color(0xFF5C6B8A), const Color(0xFFEDEEF2)),
+    };
+  }
+
+  IconData _statusIcon(String? status) {
+    return switch (status?.toLowerCase()) {
+      'pending' => Icons.assignment_late_outlined,
+      'in_progress' => Icons.sync_outlined,
+      'resolved' => Icons.check_circle_outline,
+      'revision' => Icons.replay_outlined,
+      'rejected' => Icons.cancel_outlined,
+      _ => Icons.assignment_late_outlined,
+    };
+  }
+
+  IconData _categoryIcon(String category) {
+    final lower = category.toLowerCase();
+    if (lower.contains('prasarana') || lower.contains('fasilitas')) {
+      return Icons.build_outlined;
+    } else if (lower.contains('akademik') || lower.contains('mata kuliah')) {
+      return Icons.menu_book_outlined;
+    } else if (lower.contains('pengajar')) {
+      return Icons.school_outlined;
+    }
+    return Icons.article_outlined;
   }
 }
