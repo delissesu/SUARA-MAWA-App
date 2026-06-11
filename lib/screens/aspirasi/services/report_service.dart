@@ -155,7 +155,7 @@ class ReportService {
       final options = await _authOptions();
       options.contentType = 'multipart/form-data';
 
-      final formData = FormData.fromMap({
+      final Map<String, dynamic> dataMap = {
         'title': title,
         'description': description,
         'locationLat': locationLat,
@@ -164,16 +164,20 @@ class ReportService {
         'isPublic': isPublic.toString(),
         'departmentId': departmentId,
         'categoryId': categoryId,
-        'files': await Future.wait(
-          files.map((f) => MultipartFile.fromFile(
-                f.path,
-                filename: f.path.split(Platform.pathSeparator).last,
-              )),
-        ),
-        'names': files
-            .map((f) => f.path.split(Platform.pathSeparator).last)
-            .toList(),
-      });
+      };
+
+      final formData = FormData.fromMap(dataMap);
+
+      for (final file in files) {
+        final fileName = file.path.split(Platform.pathSeparator).last;
+        formData.files.add(
+          MapEntry(
+            'files',
+            await MultipartFile.fromFile(file.path, filename: fileName),
+          ),
+        );
+        formData.fields.add(MapEntry('names', fileName));
+      }
 
       final response = await _dio.post(
         '/mahasiswa/report/create',
@@ -185,6 +189,8 @@ class ReportService {
       return (body['status'] == 'success', body['message']?.toString() ?? '');
     } on DioException catch (e) {
       return (false, e.response?.data?['message']?.toString() ?? e.message ?? 'Unknown error');
+    } catch (e) {
+      return (false, 'Client error: $e');
     }
   }
 }

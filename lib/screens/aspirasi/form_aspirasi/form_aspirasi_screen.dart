@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -108,11 +109,14 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      _showSnackBar('An error occurred. Please try again.', isError: true);
+      _showSnackBar('Submission error: $e', isError: true);
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (isError) {
+      debugPrint('FormAspirasi Error: $message');
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -122,6 +126,15 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
         backgroundColor: isError ? Colors.red.shade700 : const Color(0xFF1B4332),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: isError
+            ? SnackBarAction(
+                label: 'Copy',
+                textColor: Colors.white,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: message));
+                },
+              )
+            : null,
       ),
     );
   }
@@ -173,7 +186,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isFetchingGps = false);
-      _showSnackBar('Could not get GPS location.', isError: true);
+      _showSnackBar('GPS error: $e', isError: true);
     }
   }
 
