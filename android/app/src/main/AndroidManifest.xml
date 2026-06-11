@@ -2,6 +2,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="suara_mawa"
         android:name="${applicationName}"
@@ -33,7 +35,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" 
-                    android:host="manifesto-sincere-domelike.ngrok-free.dev"
+                    android:host="0bd0-114-10-39-64.ngrok-free.app"
                     android:pathPrefix="/sign-in/google/success" />
                 <!-- <data android:scheme="https" android:host="subdomain.domainkamu.com" android:pathPrefix="/sign-in/google" /> -->
             </intent-filter>

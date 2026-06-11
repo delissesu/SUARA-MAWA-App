@@ -9,6 +9,8 @@ import 'package:video_player/video_player.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:video_compress/video_compress.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final int reportId;
@@ -1297,6 +1299,114 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
     }
   }
 
+  Future<void> _showCameraOptions() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppColors.primary),
+                title: const Text('Ambil Foto'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _captureMedia(isVideo: false);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam, color: AppColors.primary),
+                title: const Text('Ambil Video'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _captureMedia(isVideo: true);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _captureMedia({required bool isVideo}) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+
+      if (isVideo) {
+        final XFile? pickedFile = await picker.pickVideo(
+          source: ImageSource.camera,
+          maxDuration: const Duration(minutes: 5),
+        );
+
+        if (pickedFile != null) {
+          if (mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                return const AlertDialog(
+                  content: Row(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 16),
+                      Text("Mengkompresi video..."),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
+
+          final MediaInfo? mediaInfo = await VideoCompress.compressVideo(
+            pickedFile.path,
+            quality: VideoQuality.MediumQuality,
+            deleteOrigin: true,
+            includeAudio: true,
+          );
+
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+
+          if (mediaInfo != null && mediaInfo.file != null) {
+            setState(() {
+              _selectedFiles.add(mediaInfo.file!);
+              _fileNames.add(pickedFile.name);
+            });
+          }
+        }
+      } else {
+        final XFile? pickedFile = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 50,
+          maxWidth: 1080,
+          maxHeight: 1080,
+        );
+
+        if (pickedFile != null) {
+          setState(() {
+            _selectedFiles.add(File(pickedFile.path));
+            _fileNames.add(pickedFile.name);
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil atau mengkompresi media: $e')),
+        );
+      }
+    }
+  }
+
   void _removeFile(int index) {
     setState(() {
       _selectedFiles.removeAt(index);
@@ -1450,20 +1560,37 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // File Picker
                 const Text(
                   'Lampiran (Opsional)',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: _pickFiles,
-                  icon: const Icon(Icons.attach_file, size: 18),
-                  label: const Text('Pilih File'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _pickFiles,
+                        icon: const Icon(Icons.attach_file, size: 18),
+                        label: const Text('Pilih File'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _showCameraOptions,
+                        icon: const Icon(Icons.camera_alt, size: 18),
+                        label: const Text('Kamera'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 
                 if (_selectedFiles.isNotEmpty) ...[
