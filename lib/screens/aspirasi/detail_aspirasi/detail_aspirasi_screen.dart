@@ -35,6 +35,21 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
     _fetchDetail();
   }
 
+  String _timeAgo(DateTime dateTime) {
+    final difference = DateTime.now().difference(dateTime);
+    if (difference.inDays > 7) {
+      return DateFormat('MMM d, yyyy').format(dateTime);
+    } else if (difference.inDays >= 1) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours >= 1) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes >= 1) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
   Future<void> _fetchDetail() async {
     setState(() {
       _isLoading = true;
@@ -54,8 +69,34 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
         return;
       }
 
+      // Fetch official response/feedback if the report has status updates other than pending
+      OfficialResponse? officialResponse;
+      final nonPendingStatuses = detail.statuses
+          .where((s) => s.status.toLowerCase() != 'pending')
+          .toList();
+      if (nonPendingStatuses.isNotEmpty) {
+        // Fetch feedback for the latest non-pending status
+        final latestStatus = nonPendingStatuses.last;
+        try {
+          final feedbacks = await _reportService.getFeedbackDetail(latestStatus.id);
+          if (feedbacks.isNotEmpty) {
+            final fb = feedbacks.first;
+            if (fb.feedback != null) {
+              officialResponse = OfficialResponse(
+                responderName: fb.changedBy?.name ?? latestStatus.author?.name ?? 'Official Responder',
+                timeAgo: fb.changedAt != null ? _timeAgo(fb.changedAt!) : '',
+                avatarLabel: (fb.changedBy?.name ?? latestStatus.author?.name ?? 'O')[0].toUpperCase(),
+                message: fb.feedback!.description,
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('[DetailAspirasiScreen] Error fetching feedback: $e');
+        }
+      }
+
       // Map API ReportDetail → UI DetailAspirasiModel
-      final model = _mapToDetailModel(detail);
+      final model = _mapToDetailModel(detail, officialResponse);
 
       setState(() {
         _data = model;
@@ -70,7 +111,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
     }
   }
 
-  DetailAspirasiModel _mapToDetailModel(ReportDetail detail) {
+  DetailAspirasiModel _mapToDetailModel(ReportDetail detail, OfficialResponse? officialResponse) {
     // Build timeline from statuses
     final timeline = <TimelineStep>[];
     for (int i = 0; i < detail.statuses.length; i++) {
@@ -117,6 +158,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
       locationLat: detail.locationLat,
       locationLong: detail.locationLong,
       timeline: timeline,
+      officialResponse: officialResponse,
       evidenceIds: detail.evidences.map((e) => e.id).toList(),
     );
   }
