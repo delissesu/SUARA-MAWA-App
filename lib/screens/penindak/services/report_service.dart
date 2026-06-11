@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -99,6 +100,76 @@ class ReportService {
       return null;
     } on DioException catch (e) {
       print('Error fetching feedback detail: ${e.message}');
+      return null;
+    }
+  }
+
+  /// Create feedback via POST /report/feedback/create
+  Future<Map<String, dynamic>> createFeedback({
+    required int reportId,
+    required String status,
+    required String description,
+    List<File>? files,
+    List<String>? names,
+  }) async {
+    try {
+      final token = await _getToken();
+      
+      final formData = FormData.fromMap({
+        'reportId': reportId,
+        'status': status,
+        'description': description,
+      });
+
+      if (files != null && files.isNotEmpty) {
+        for (int i = 0; i < files.length; i++) {
+          formData.files.add(MapEntry(
+            'files',
+            await MultipartFile.fromFile(files[i].path),
+          ));
+          if (names != null && i < names.length) {
+            formData.fields.add(MapEntry('names', names[i]));
+          }
+        }
+      }
+
+      final response = await _dio.post(
+        '/report/feedback/create',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return response.data;
+    } on DioException catch (e) {
+      print('Error creating feedback: ${e.message}');
+      if (e.response != null) {
+        print('Response data: ${e.response?.data}');
+      }
+      return {
+        'status': 'failed',
+        'message': e.message ?? 'Unknown error occurred',
+      };
+    }
+  }
+
+  /// Returns the full preview URL for feedback video/image streaming
+  String getFeedbackAttachmentPreviewUrl(int attachmentId) {
+    return '$_baseUrl/report/feedback/$attachmentId/preview';
+  }
+
+  /// Fetch feedback attachment image bytes for display
+  Future<Uint8List?> fetchFeedbackAttachmentPreviewBytes(int attachmentId) async {
+    try {
+      final token = await _getToken();
+      final response = await _dio.get(
+        '/report/feedback/$attachmentId/preview',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          responseType: ResponseType.bytes,
+        ),
+      );
+      return Uint8List.fromList(response.data);
+    } on DioException catch (e) {
+      print('Error fetching feedback attachment: ${e.message}');
       return null;
     }
   }
