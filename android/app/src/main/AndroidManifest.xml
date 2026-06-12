@@ -41,9 +41,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" 
-                    android:host="0bd0-114-10-39-64.ngrok-free.app"
-                    android:pathPrefix="/sign-in/google/success" />
+                <data
+                    android:scheme="suaramawa"
+                    android:host="open" />
                 <!-- <data android:scheme="https" android:host="subdomain.domainkamu.com" android:pathPrefix="/sign-in/google" /> -->
             </intent-filter>
         </activity>
