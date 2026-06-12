@@ -1,4 +1,3 @@
-// lib/screens/admin/admin_detail_aspirasi.dart
 import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/admin/admin_dashboard_screen.dart';
 
@@ -69,7 +68,6 @@ class _AdminDetailAspirasiState extends State<AdminDetailAspirasi> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // ── Header card ─────────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
@@ -99,7 +97,6 @@ class _AdminDetailAspirasiState extends State<AdminDetailAspirasi> {
           ),
           const SizedBox(height: 12),
 
-          // ── Info cards ──────────────────────────────────────────────────────
           Row(children: [
             Expanded(child: _infoTile(Icons.location_on_outlined, 'Lokasi', item.lokasi)),
             const SizedBox(width: 10),
@@ -107,7 +104,6 @@ class _AdminDetailAspirasiState extends State<AdminDetailAspirasi> {
           ]),
           const SizedBox(height: 12),
 
-          // ── Status ──────────────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
@@ -116,7 +112,6 @@ class _AdminDetailAspirasiState extends State<AdminDetailAspirasi> {
               const Text('Status Aspirasi',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kNavy)),
               const SizedBox(height: 12),
-              // Current status badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: _statusColor, borderRadius: BorderRadius.circular(20)),
@@ -128,7 +123,6 @@ class _AdminDetailAspirasiState extends State<AdminDetailAspirasi> {
                 ]),
               ),
               const SizedBox(height: 14),
-              // Update dropdown
               const Text('Ubah Status',
                   style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
@@ -153,7 +147,6 @@ class _AdminDetailAspirasiState extends State<AdminDetailAspirasi> {
           ),
           const SizedBox(height: 12),
 
-          // ── Catatan admin ───────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
@@ -177,7 +170,6 @@ class _AdminDetailAspirasiState extends State<AdminDetailAspirasi> {
           ),
           const SizedBox(height: 20),
 
-          // ── Action buttons ──────────────────────────────────────────────────
           Row(children: [
             Expanded(child: OutlinedButton(
               onPressed: () => Navigator.pop(context),

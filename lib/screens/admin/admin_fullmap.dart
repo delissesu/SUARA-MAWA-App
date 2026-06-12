@@ -1,4 +1,3 @@
-// lib/screens/admin/admin_fullmap.dart
 import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/admin/admin_dashboard_screen.dart';
 import 'package:suara_mawa/screens/admin/admin_detail_aspirasi.dart';
@@ -15,7 +14,6 @@ class _AdminFullMapState extends State<AdminFullMap> {
 
   final _filters = ['Semua', 'Belum Terbaca', 'Proses', 'Selesai'];
 
-  // Posisi marker relatif pada canvas (x%, y%)
   final List<_MapMarker> _markers = [
     _MapMarker(label: 'Wifi mati loh yah',    x: 0.22, y: 0.30, color: const Color(0xFF00838F), index: 0),
     _MapMarker(label: 'Jalan berlubang',       x: 0.55, y: 0.50, color: kRed,                   index: 1),
@@ -51,7 +49,6 @@ class _AdminFullMapState extends State<AdminFullMap> {
         ],
       ),
       body: Column(children: [
-        // ── Filter chips ───────────────────────────────────────────────────────
         Container(
           color: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -81,7 +78,6 @@ class _AdminFullMapState extends State<AdminFullMap> {
           ),
         ),
 
-        // ── Map canvas ─────────────────────────────────────────────────────────
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -102,9 +98,7 @@ class _AdminFullMapState extends State<AdminFullMap> {
                     CustomPaint(
                         size: Size(constraints.maxWidth, constraints.maxHeight),
                         painter: _FullGridPainter()),
-                    // Bangunan / zona (dekorasi)
                     ..._buildZones(constraints),
-                    // Markers
                     ..._filteredMarkers.map((m) {
                       final x = m.x * constraints.maxWidth;
                       final y = m.y * constraints.maxHeight;
@@ -134,9 +128,7 @@ class _AdminFullMapState extends State<AdminFullMap> {
                         ),
                       );
                     }),
-                    // Legend
                     Positioned(top: 12, right: 12, child: _legend()),
-                    // Jumlah marker
                     Positioned(bottom: 12, left: 12, child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
@@ -151,7 +143,6 @@ class _AdminFullMapState extends State<AdminFullMap> {
           ),
         ),
 
-        // ── Daftar singkat di bawah ────────────────────────────────────────────
         Container(
           height: 200,
           decoration: const BoxDecoration(

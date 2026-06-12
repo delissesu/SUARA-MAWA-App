@@ -1,8 +1,8 @@
-// lib/screens/admin/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
-//import 'package:suara_mawa/screens/admin/admin_account_management.dart';
+import 'package:suara_mawa/screens/admin/admin_account_management.dart';
 import 'package:suara_mawa/screens/admin/admin_fullmap.dart';
 import 'package:suara_mawa/screens/admin/admin_detail_aspirasi.dart';
+import 'package:suara_mawa/screens/admin/admin_all_aspirasi.dart';
 
 const kNavy  = Color(0xFF1A2C5B);
 const kTeal  = Color(0xFF4DD0C4);
@@ -72,7 +72,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
 
   final _pages = const [
     _DashboardBody(),
-    //adminAccountManagement(),
+    AdminAccountManagement(),
     _ProfilePage(),
   ];
 
@@ -132,7 +132,6 @@ class _DashboardBody extends StatelessWidget {
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Banner peta
         GestureDetector(
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const AdminFullMap())),
@@ -178,10 +177,9 @@ class _DashboardBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        // Stat cards
         Row(children: [
           Expanded(child: _statCard('Total\nAspirasi', '3,482', Icons.layers_outlined,
-              Colors.white, kNavy, kNavy)),
+              Colors.white, kNavy, kNavy)), 
           const SizedBox(width: 12),
           Expanded(child: _statCard('Laporan\nBaru', '14', null,
               const Color(0xFFB2EBF2), const Color(0xFF00838F), const Color(0xFF00838F),
@@ -191,11 +189,13 @@ class _DashboardBody extends StatelessWidget {
         _statCard('Proses\nVerifikasi', '67', Icons.pending_actions_outlined,
             const Color(0xFFFFEBEE), kRed, kRed),
         const SizedBox(height: 20),
-        // Recent aspirasi
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           const Text('Aspirasi Baru',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kNavy)),
-          TextButton(onPressed: () {},
+          TextButton(onPressed: () {
+              Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AdminAllAspirasiScreen()));
+          },
               child: const Text('Lihat Semua', style: TextStyle(color: kNavy, fontSize: 13))),
         ]),
         const Divider(height: 8),
