@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
+import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/utils/photo_galery.dart';
 import 'package:suara_mawa/utils/user_controller.dart';
 import 'package:suara_mawa/widgets/shared_main_screen.dart';
@@ -234,19 +235,45 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage> {
                         'Memiliki karakter spesial (!@#\$&*~)',
                       ),
                       const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
-                          // 4. Trigger validation across all fields
-                          if (_formKey.currentState!.validate()) {
-                            // Process your valid data here
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Password Berhasil Diperbarui'),
-                              ),
-                            );
-                          }
-                        },
-                        child: const Text('Update Password'),
+                      SizedBox(
+                        width:
+                            double.infinity, // Expands to full available width
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            // 4. Trigger validation across all fields
+                            if (true){
+                              // _formKey.currentState!.validate()) {
+                              // Process your valid data here
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              bool res = await _authService.updatePassword(
+                                newPwController.text,
+                                currentPwController.text,
+                              );
+                              setState(() {
+                                _isLoading = false;
+                              });
+                              if (res && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Password Berhasil Diperbarui',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                AppColors.primary, // Background color
+                            foregroundColor:
+                                Colors.white, // Text and icon color
+                          ),
+                          child: const Text('Update Password'),
+                        ),
                       ),
                     ],
                   ),

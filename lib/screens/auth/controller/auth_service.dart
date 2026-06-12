@@ -9,6 +9,18 @@ import 'package:suara_mawa/screens/auth/index.dart';
 import 'package:suara_mawa/screens/penindak/penindak_main_screen.dart';
 import 'package:suara_mawa/utils/local_notif.dart';
 import 'package:suara_mawa/utils/user_controller.dart';
+import 'package:suara_mawa/widgets/datas.dart';
+
+class AuthInterceptor extends Interceptor {
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.response != null && err.response!.data != null) {
+      AuthService().HandleError(err.response!.data["code"]);
+    } else {
+      return handler.next(err);
+    }
+  }
+}
 
 class AuthService {
   static const String baseUrl = String.fromEnvironment(
@@ -24,6 +36,10 @@ class AuthService {
   );
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  AuthService() {
+    _dio.interceptors.add(AuthInterceptor());
+  }
 
   Future<(bool, String)> checkAuth(WidgetRef ref) async {
     try {
@@ -43,6 +59,7 @@ class AuthService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       final user = User.fromJson(response.data);
+      print(response);
       ref
           .read(userControllerProvider.notifier)
           .update(
@@ -103,7 +120,7 @@ class AuthService {
       final userRoleId = data["user"]?["userRoleId"];
 
       if (token != null) {
-        await _storage.write(key: "auth_token", value: token);
+        await storeToken(token);
       }
       if (userRoleId != null) {
         await _storage.write(key: "userRoleId", value: userRoleId.toString());
@@ -115,6 +132,10 @@ class AuthService {
     } catch (e) {
       throw Exception("Exception" + e.toString());
     }
+  }
+
+  Future<void> storeToken(String token) async {
+    await _storage.write(key: "auth_token", value: token);
   }
 
   Future<(bool, String?)> signInEmail(String email, String password) async {
@@ -130,7 +151,7 @@ class AuthService {
       final token = data["token"];
       final userRoleId = data["user"]?["userRoleId"];
       if (token != null) {
-        await _storage.write(key: "auth_token", value: token);
+        await storeToken(token);
       }
       if (userRoleId != null) {
         await _storage.write(key: "userRoleId", value: userRoleId.toString());
@@ -311,7 +332,7 @@ class AuthService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       if (response.data['token'] != null) {
-        await _storage.write(key: "auth_token", value: response.data['token']);
+        await storeToken(response.data['token']);
       }
       return true;
     } on DioException catch (e) {
@@ -320,7 +341,7 @@ class AuthService {
       //     "message": "Invalid password",
       //     "code": "INVALID_PASSWORD"
       // }
-      if (e.response?.data['code']);
+      if (e.response?.data['code']) ;
       print(e.toString());
       return false;
     } catch (e) {
@@ -353,14 +374,20 @@ class AuthService {
   ) async {
     try {
       final token = await this.getToken();
-      final response = await _dio.get(
+      final response = await _dio.post(
         '/api/auth/change-password',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
-        data: {"newPassword": newPassoword, "currentPassword": currentPassword},
+        data: {
+          "newPassword": newPassoword,
+          "currentPassword": currentPassword,
+          "revokeOtherSessions": true,
+        },
       );
+      response.data['token'];
       return true;
     } on DioException catch (e) {
       print(e.toString());
+      print(e.response?.data);
       return false;
     } catch (e) {
       print(e.toString());
@@ -397,101 +424,196 @@ class AuthService {
     }
   }
 
-  void HandleError(
-    String code,
-    BuildContext context, {
+  void showError(String message) {
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  Future<void> HandleError(
+    String code, {
     String? email,
     String? password,
   }) async {
-    print(code);
     switch (code) {
       case "EMAIL_NOT_VERIFIED":
         var (em, pw) = await getEmailPw();
+
         if (email != null) {
-          saveEmailPw(email, password!);
+          await saveEmailPw(email, password!);
         } else if (em == null) {
-          print("Errorrrrr");
-        }
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => VerifyEmailPage()),
-        );
-        break;
-      case "UNAUTHORIZED":
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-        );
-        break;
-      case "EMPTY_MAHASISWA_DETAIL":
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => NimPage()),
-        );
-        break;
-      case "EMPTY_PENINDAK_DETAIL":
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => NimPage()),
-        );
-        break;
-      case "INVALID_USER_ROLE":
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => NimPage()),
-        );
-        break;
-      case "EMPTY_PHONE_NUMBER":
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PhonePage()),
-        );
-        break;
-      case "UNVERIFIED_PHONE_NUMBER":
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PhoneVerifyPage()),
-        );
-        break;
-      case "SUCCESS":
-        final userRoleIdStr = await _storage.read(key: "userRoleId");
-        int? userRoleId = int.tryParse(userRoleIdStr ?? '');
-        await sendFCMToken();
-        if (!context.mounted) return;
-        if (userRoleId == null) {
-          final user = await getUser();
-          userRoleId = user?.userRoleId;
+          debugPrint("Email tidak ditemukan");
         }
 
-        if (userRoleId == 2) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const PenindakMainScreen()),
-          );
-        } else if (userRoleId == 1) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AspirasiMainScreen()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => DashboardPage()),
-          );
-        }
+        NavigationService.navigatorKey.currentState?.pushReplacement(
+          MaterialPageRoute(builder: (_) => VerifyEmailPage()),
+        );
         break;
+
+      case "UNAUTHORIZED":
+        NavigationService.navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => LoginPage()),
+          (_) => false,
+        );
+        break;
+
+      case "EMPTY_MAHASISWA_DETAIL":
+      case "EMPTY_PENINDAK_DETAIL":
+      case "INVALID_USER_ROLE":
+        NavigationService.navigatorKey.currentState?.pushReplacement(
+          MaterialPageRoute(builder: (_) => NimPage()),
+        );
+        break;
+
+      case "EMPTY_PHONE_NUMBER":
+        NavigationService.navigatorKey.currentState?.pushReplacement(
+          MaterialPageRoute(builder: (_) => PhonePage()),
+        );
+        break;
+
+      case "UNVERIFIED_PHONE_NUMBER":
+        NavigationService.navigatorKey.currentState?.pushReplacement(
+          MaterialPageRoute(builder: (_) => PhoneVerifyPage()),
+        );
+        break;
+
+      case "SUCCESS":
+        await _handleSuccess();
+        break;
+
       default:
         if (code.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Error: $code"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          showError("Error: $code");
         }
-        break;
     }
   }
+
+  Future<void> _handleSuccess() async {
+    final userRoleIdStr = await _storage.read(key: "userRoleId");
+
+    int? userRoleId = int.tryParse(userRoleIdStr ?? '');
+
+    await sendFCMToken();
+
+    if (userRoleId == null) {
+      final user = await getUser();
+      userRoleId = user?.userRoleId;
+    }
+
+    Widget page;
+
+    if (userRoleId == 2) {
+      page = const PenindakMainScreen();
+    } else if (userRoleId == 1) {
+      page = const AspirasiMainScreen();
+    } else {
+      page = DashboardPage();
+    }
+
+    NavigationService.navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => page),
+      (_) => false,
+    );
+  }
+
+  // void HandleError(
+  //   String code,
+  //   BuildContext context, {
+  //   String? email,
+  //   String? password,
+  // }) async {
+  //   print(code);
+  //   switch (code) {
+  //     case "EMAIL_NOT_VERIFIED":
+  //       var (em, pw) = await getEmailPw();
+  //       if (email != null) {
+  //         saveEmailPw(email, password!);
+  //       } else if (em == null) {
+  //         print("Errorrrrr");
+  //       }
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => VerifyEmailPage()),
+  //       );
+  //       break;
+  //     case "UNAUTHORIZED":
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => LoginPage()),
+  //       );
+  //       break;
+  //     case "EMPTY_MAHASISWA_DETAIL":
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => NimPage()),
+  //       );
+  //       break;
+  //     case "EMPTY_PENINDAK_DETAIL":
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => NimPage()),
+  //       );
+  //       break;
+  //     case "INVALID_USER_ROLE":
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => NimPage()),
+  //       );
+  //       break;
+  //     case "EMPTY_PHONE_NUMBER":
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => PhonePage()),
+  //       );
+  //       break;
+  //     case "UNVERIFIED_PHONE_NUMBER":
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => PhoneVerifyPage()),
+  //       );
+  //       break;
+  //     case "SUCCESS":
+  //       final userRoleIdStr = await _storage.read(key: "userRoleId");
+  //       int? userRoleId = int.tryParse(userRoleIdStr ?? '');
+  //       await sendFCMToken();
+  //       if (!context.mounted) return;
+  //       if (userRoleId == null) {
+  //         final user = await getUser();
+  //         userRoleId = user?.userRoleId;
+  //       }
+
+  //       if (userRoleId == 2) {
+  //         Navigator.pushAndRemoveUntil(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => const PenindakMainScreen()),
+  //           (Route<dynamic> route) => false,
+  //         );
+  //       } else if (userRoleId == 1) {
+  //         Navigator.pushAndRemoveUntil(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => const AspirasiMainScreen()),
+  //           (Route<dynamic> route) => false,
+  //         );
+  //       } else {
+  //         Navigator.pushAndRemoveUntil(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => DashboardPage()),
+  //           (Route<dynamic> route) => false,
+  //         );
+  //       }
+  //       break;
+  //     default:
+  //       if (code.isNotEmpty) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text("Error: $code"),
+  //             backgroundColor: Colors.red,
+  //           ),
+  //         );
+  //       }
+  //       break;
+  //   }
+  // }
 
   String _getErrorCode(DioException e) {
     final data = e.response?.data;

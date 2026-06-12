@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/utils/photo_galery.dart';
 import 'package:suara_mawa/utils/user_controller.dart';
 import 'package:suara_mawa/widgets/shared_main_screen.dart';
@@ -18,11 +19,13 @@ class UpdateProfilePage extends ConsumerStatefulWidget {
 
 class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
   File? selectedImage;
+  final _formKey = GlobalKey<FormState>();
   final idPhoneRegex = RegExp(r'^(\+62|62|0)8[1-9][0-9]{7,11}$');
   final textStyle = const TextStyle(color: Colors.black, fontSize: 16);
   final errorStyle = const TextStyle(color: Colors.red, fontSize: 16);
   late final TextEditingController nomorHPController;
   late final UserModel userModel;
+  bool _isLoading = false;
   Future<void> _pickImage() async {
     File? image = await pickImage(context);
     if (image != null) {
@@ -43,7 +46,6 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
   @override
   void dispose() {
     nomorHPController.dispose();
-    // TODO: implement dispose
     super.dispose();
   }
 
@@ -105,7 +107,7 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
                         child: const Text("Edit"),
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
 
                       TextFormField(
                         style: textStyle,
@@ -143,11 +145,33 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 16),
                       if (userModel.mahasiswaDetail != null)
                         MahasiswaDetailForm(),
                       if (userModel.penindakDetail != null)
                         PenindakDetailForm(),
                       if (userModel.adminDetail != null) AdminDetailForm(),
+                      
+                      const SizedBox(height: 20),
+                      
+                      SizedBox(
+                        width: double.infinity, // Expands to full available width
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              setState(() => _isLoading = true);
+                              
+                              setState(() => _isLoading = false);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,     // Background color
+                            foregroundColor: Colors.white,    // Text and icon color
+                          ),
+                          child: const Text("Perbarui", style: TextStyle()),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -200,15 +224,25 @@ class MahasiswaDetailForm extends ConsumerStatefulWidget {
 }
 
 class _MahasiswaDetailFormState extends ConsumerState<MahasiswaDetailForm> {
-  final nimController = TextEditingController(text: '');
+  late final nimController;
   final textStyle = const TextStyle(color: Colors.black, fontSize: 16);
+
+  @override
+  void initState() {
+    super.initState();
+    nimController = TextEditingController(
+      text: ref.read(
+        userControllerProvider.select((m) => m.mahasiswaDetail?.nim),
+      ),
+    );
+    // nipController = TextEditingController(ref.read(userControllerProvider.select((m)=>m.penindakDetail?.nip)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       style: textStyle,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-      ],
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         hintStyle: textStyle,
         hintText: 'NIM',
@@ -238,13 +272,24 @@ class PenindakDetailForm extends ConsumerStatefulWidget {
 }
 
 class _PenindakDetailFormState extends ConsumerState<PenindakDetailForm> {
-  final nikController = TextEditingController();
-  final nipController = TextEditingController();
+  late final nikController;
+  // late final nipController;
+
+  @override
+  void initState() {
+    super.initState();
+    nikController = TextEditingController(
+      text: ref.read(
+        userControllerProvider.select((m) => m.penindakDetail?.nik),
+      ),
+    );
+    // nipController = TextEditingController(ref.read(userControllerProvider.select((m)=>m.penindakDetail?.nip)));
+  }
 
   @override
   void dispose() {
     nikController.dispose();
-    nipController.dispose();
+    // nipController.dispose();
     super.dispose();
   }
 
@@ -253,8 +298,8 @@ class _PenindakDetailFormState extends ConsumerState<PenindakDetailForm> {
     return Column(
       children: [
         IdentityTextField(controller: nikController, label: 'NIK'),
-        const SizedBox(height: 16),
-        IdentityTextField(controller: nipController, label: 'NIP'),
+        // const SizedBox(height: 16),
+        // IdentityTextField(controller: nipController, label: 'NIP'),
       ],
     );
   }
@@ -268,13 +313,21 @@ class AdminDetailForm extends ConsumerStatefulWidget {
 }
 
 class _AdminDetailFormState extends ConsumerState<AdminDetailForm> {
-  final nikController = TextEditingController();
-  final nipController = TextEditingController();
+  late final nikController;
+  // final nipController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    nikController = TextEditingController(
+      text: ref.read(userControllerProvider.select((m) => m.adminDetail?.nik)),
+    );
+    // nipController = TextEditingController(ref.read(userControllerProvider.select((m)=>m.penindakDetail?.nip)));
+  }
 
   @override
   void dispose() {
     nikController.dispose();
-    nipController.dispose();
+    // nipController.dispose();
     super.dispose();
   }
 
@@ -283,8 +336,8 @@ class _AdminDetailFormState extends ConsumerState<AdminDetailForm> {
     return Column(
       children: [
         IdentityTextField(controller: nikController, label: 'NIK'),
-        const SizedBox(height: 16),
-        IdentityTextField(controller: nipController, label: 'NIP'),
+        // const SizedBox(height: 16),
+        // IdentityTextField(controller: nipController, label: 'NIP'),
       ],
     );
   }

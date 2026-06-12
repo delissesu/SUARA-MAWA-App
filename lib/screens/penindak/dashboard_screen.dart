@@ -16,7 +16,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Expanded(
+        // child: Expanded( // Expanded causing error, advice to refacctor and use expanded in Row, Column, or Flex parent widget
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -38,7 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-        ),
+        // ),
       ),
     );
   }

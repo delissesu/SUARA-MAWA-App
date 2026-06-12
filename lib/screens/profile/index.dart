@@ -10,21 +10,23 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return  SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 24,
+        padding: const EdgeInsets.fromLTRB(
+          16, 0, 16, 0
         ),
-        child: Column(
-          children: const [
-            ProfilePreview(),
+        child: SingleChildScrollView(
+          child: Column(
+            children: const [
+              SizedBox(height: 24),
+              
+              ProfilePreview(),
 
-            SizedBox(height: 24), // Jarak profile dan menu
+              SizedBox(height: 24), // Jarak profile dan menu
 
-            Expanded(
-              child: ProfileOptions(),
-            ),
-          ],
-        ),
+              ProfileOptions(),
+
+            ],
+          ),
+        ), 
       ),
     );
   }

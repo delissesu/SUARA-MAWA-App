@@ -55,7 +55,7 @@ class _FirstPageState extends ConsumerState<FirstPage> {
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             print("Code First Page: $code");
-            _authHandler.HandleError(code, context);
+            _authHandler.HandleError(code);
           });
 
           return const Scaffold(
@@ -73,12 +73,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Padding(
-          padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
-          child: LoginForm(),
-        ),
-      ),
+      body: LoginForm(),
     );
   }
 }

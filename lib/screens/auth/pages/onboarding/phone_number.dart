@@ -174,7 +174,7 @@ class _PhoneNumberState extends State<PhoneNumber> {
                               ),
                             );
                           } else {
-                            _authService.HandleError(code ?? '', context);
+                            _authService.HandleError(code ?? '');
                           }
                           setState(() {
                             _isLoading = false;

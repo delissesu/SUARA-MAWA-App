@@ -81,38 +81,56 @@ class ProfileOptions extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(Icons.warning, color: Colors.red,),
-                    Text('Konfirmasi Logout', )
-                  ]),
-                content: const
-                    Text('Apakah anda yakin untuk logout?'),
+                    Icon(Icons.warning, color: Colors.red),
+                    Text('Konfirmasi Logout'),
+                  ],
+                ),
+                content: const Text('Apakah anda yakin untuk logout?'),
                 actions: <Widget>[
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 255, 162, 162), // Sets the background color
-                      foregroundColor: const Color.fromARGB(255, 122, 61, 57), // Sets the text/icon color
+                      backgroundColor: const Color.fromARGB(
+                        255,
+                        255,
+                        162,
+                        162,
+                      ), // Sets the background color
+                      foregroundColor: const Color.fromARGB(
+                        255,
+                        122,
+                        61,
+                        57,
+                      ), // Sets the text/icon color
                     ),
-                    onPressed: () => Navigator.of(context).pop(false), // Returns false
-                    child: const Text('Kembali',),
+                    onPressed: () =>
+                        Navigator.of(context).pop(false), // Returns false
+                    child: const Text('Kembali'),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 255, 0, 0), // Sets the background color
+                      backgroundColor: const Color.fromARGB(
+                        255,
+                        255,
+                        0,
+                        0,
+                      ), // Sets the background color
                       foregroundColor: Colors.white, // Sets the text/icon color
                     ),
-                    onPressed: () => Navigator.of(context).pop(true), // Returns true
-                    child: const Text('Logout',),
+                    onPressed: () =>
+                        Navigator.of(context).pop(true), // Returns true
+                    child: const Text('Logout'),
                   ),
                 ],
               );
-            }
+            },
           );
-          if (result!=null && result && context.mounted){
+          if (result != null && result && context.mounted) {
             AuthService().logout(ref);
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const LoginPage()),
-              (Route<dynamic> route) => false, // This false drops all previous routes
+              (Route<dynamic> route) =>
+                  false, // This false drops all previous routes
             );
           }
         },
@@ -121,7 +139,7 @@ class ProfileOptions extends ConsumerWidget {
 
     return Card(
       elevation: 3,
-      shadowColor: Colors.transparent, 
+      shadowColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
@@ -129,32 +147,53 @@ class ProfileOptions extends ConsumerWidget {
           width: 1.0,
         ),
       ),
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: menus.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final item = menus[index];
-
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            leading: CircleAvatar(
-              backgroundColor: item.backgroundColor,
-              child: Icon(
-                item.icon,
-                color: item.iconColor,
+      child: Column(
+        children: [
+          for (int i = 0; i < menus.length; i++) ...[
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
               ),
+              leading: CircleAvatar(
+                backgroundColor: menus[i].backgroundColor,
+                child: Icon(menus[i].icon, color: menus[i].iconColor),
+              ),
+              title: Text(menus[i].title),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: menus[i].onTap,
             ),
-            title: Text(item.title),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: item.onTap,
-          );
-        },
+            if (i != menus.length - 1) const Divider(height: 1),
+          ],
+        ],
       ),
     );
+    //   child: ListView.separated(
+    //     padding: const EdgeInsets.symmetric(vertical: 8),
+    //     itemCount: menus.length,
+    //     separatorBuilder: (_, __) => const Divider(height: 1),
+    //     itemBuilder: (context, index) {
+    //       final item = menus[index];
+
+    //       return ListTile(
+    //         contentPadding: const EdgeInsets.symmetric(
+    //           horizontal: 16,
+    //           vertical: 8,
+    //         ),
+    //         leading: CircleAvatar(
+    //           backgroundColor: item.backgroundColor,
+    //           child: Icon(
+    //             item.icon,
+    //             color: item.iconColor,
+    //           ),
+    //         ),
+    //         title: Text(item.title),
+    //         trailing: const Icon(Icons.chevron_right),
+    //         onTap: item.onTap,
+    //       );
+    //     },
+    //   ),
+    // );
   }
 }
 
@@ -178,7 +217,7 @@ class ProfilePreview extends ConsumerWidget {
       width: double.infinity,
       child: Card(
         elevation: 3,
-        shadowColor: Colors.transparent, 
+        shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
@@ -193,29 +232,25 @@ class ProfilePreview extends ConsumerWidget {
               CircleAvatar(
                 radius: 50,
                 backgroundImage: NetworkImage(
-                  "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um)=>um.user?.name))}/profile/photo",
+                  "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um) => um.user?.name))}/profile/photo",
                   headers: {
-                    'Authorization':"Bearer ${ref.watch(userControllerProvider.select((um)=>um.token))}"
-                  }
+                    'Authorization':
+                        "Bearer ${ref.watch(userControllerProvider.select((um) => um.token))}",
+                  },
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              Text(
-                name ?? "",
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text(name ?? "", style: Theme.of(context).textTheme.titleLarge),
 
               const SizedBox(height: 8),
 
-              Chip(
-                label: Text("$userRole - $department"),
-              ),
+              Chip(label: Text("$userRole - $department")),
             ],
           ),
         ),
-      )
+      ),
     );
   }
 }

@@ -3,7 +3,7 @@ import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/beranda_mahasiswa_screen.dart';
-import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
+import 'package:suara_mawa/screens/auth/controller/auth_service.dart' hide NavigationService;
 import 'package:suara_mawa/screens/auth/index.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
@@ -11,6 +11,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:suara_mawa/utils/local_notif.dart';
+import 'package:suara_mawa/utils/user_controller.dart';
+import 'package:suara_mawa/widgets/datas.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -38,12 +40,7 @@ void main() async {
   // Set background handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   setupFirebaseListeners();
-  await Future.delayed(const Duration(seconds: 3));
 
-  await NotificationService.showNotification(
-    title: "Test",
-    body: "Local notification",
-  );
   runApp(
     // ProviderScope stores the state of all providers
     const ProviderScope(child: MyApp()),
@@ -69,6 +66,8 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'SUARA MAWA',
       theme: ThemeData(fontFamily: 'PublicSans'),
+      scaffoldMessengerKey: scaffoldMessengerKey,
+      navigatorKey: NavigationService.navigatorKey,
       home: AnimatedSplashScreen(
         splash: Column(
           mainAxisAlignment: MainAxisAlignment.center,
