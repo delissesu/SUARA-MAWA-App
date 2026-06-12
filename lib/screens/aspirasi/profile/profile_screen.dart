@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:suara_mawa/screens/profile/index.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -6,9 +7,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text(
-        "Profil Mahasiswa",
-      ),
+      child: ProfilePage(),
     );
   }
 }

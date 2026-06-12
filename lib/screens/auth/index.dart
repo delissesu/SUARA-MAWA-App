@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
 import 'package:suara_mawa/screens/auth/pages/login.dart';
 import 'package:suara_mawa/screens/auth/pages/onboarding/email_verification.dart';
@@ -6,21 +7,23 @@ import 'package:suara_mawa/screens/auth/pages/onboarding/nim.dart';
 import 'package:suara_mawa/screens/auth/pages/onboarding/phone_number.dart';
 import 'package:suara_mawa/screens/auth/pages/onboarding/phone_number_verification.dart';
 import 'package:suara_mawa/screens/auth/pages/register.dart';
+import 'package:suara_mawa/screens/profile/index.dart';
+import 'package:suara_mawa/utils/user_controller.dart';
 
-class FirstPage extends StatefulWidget {
+class FirstPage extends ConsumerStatefulWidget {
   const FirstPage({super.key});
 
   @override
-  State<StatefulWidget> createState() {
+  ConsumerState<ConsumerStatefulWidget> createState() {
     return _FirstPageState();
   }
 }
 
-class _FirstPageState extends State<FirstPage> {
+class _FirstPageState extends ConsumerState<FirstPage> {
   final _authHandler = AuthService();
 
   Future<String> _check() async {
-    var (res, code) = await _authHandler.checkAuth();
+    var (res, code) = await _authHandler.checkAuth(ref);
     print("Result: $res, code: $code");
     if (res) {
       return "SUCCESS";
@@ -52,7 +55,7 @@ class _FirstPageState extends State<FirstPage> {
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             print("Code First Page: $code");
-            _authHandler.HandleError(code, context);
+            _authHandler.HandleError(code);
           });
 
           return const Scaffold(
@@ -70,12 +73,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Padding(
-          padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
-          child: LoginForm(),
-        ),
-      ),
+      body: LoginForm(),
     );
   }
 }
@@ -86,12 +84,7 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Padding(
-          padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
-          child: RegisterForm(),
-        ),
-      ),
+      body:  RegisterForm(),
     );
   }
 }
@@ -101,14 +94,7 @@ class VerifyEmailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsetsGeometry.symmetric(horizontal: 16),
-          child: EmailVerification(),
-        ),
-      ),
-    );
+    return Scaffold(body: Center(child: EmailVerification()));
   }
 }
 
@@ -117,14 +103,7 @@ class NimPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsetsGeometry.symmetric(horizontal: 16),
-          child: const NimForm(),
-        ),
-      ),
-    );
+    return Scaffold(body: Center(child: const NimForm()));
   }
 }
 
@@ -133,14 +112,7 @@ class PhonePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsetsGeometry.symmetric(horizontal: 16),
-          child: PhoneNumber(),
-        ),
-      ),
-    );
+    return Scaffold(body: Center(child: PhoneNumber()));
   }
 }
 
@@ -149,23 +121,18 @@ class PhoneVerifyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsetsGeometry.symmetric(horizontal: 16),
-          child: PhoneNumberVerification(),
-        ),
-      ),
-    );
+    return Scaffold(body: Center(child: PhoneNumberVerification()));
   }
 }
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends ConsumerWidget {
   DashboardPage({super.key});
+
   final _authService = AuthService();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userModel = ref.watch(userControllerProvider);
     return Scaffold(
       body: Center(
         child: Padding(
@@ -177,15 +144,26 @@ class DashboardPage extends StatelessWidget {
               children: [
                 const Text("Dashboard"),
                 ElevatedButton(
-                  onPressed: ()async{
-                    _authService.logout();
+                  onPressed: () async {
+                    _authService.logout(ref);
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
                     );
                   },
                   child: const Text("LogOut"),
                 ),
+                ElevatedButton(
+                  onPressed: () async {
+                    // _authService.logout(ref);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfilePage()),
+                    );
+                  },
+                  child: const Text("Profile"),
+                ),
+                Text(userModel.user?.name ?? 'default')
               ],
             ),
           ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
+import 'package:suara_mawa/utils/user_controller.dart';
 
-class SharedMainScreen extends StatefulWidget {
+class SharedMainScreen extends ConsumerStatefulWidget {
   final List<Widget> screens;
   final List<NavigationDestination> destinations;
   final int initialIndex;
@@ -14,10 +16,10 @@ class SharedMainScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<SharedMainScreen> createState() => _SharedMainScreenState();
+  ConsumerState<SharedMainScreen> createState() => _SharedMainScreenState();
 }
 
-class _SharedMainScreenState extends State<SharedMainScreen> {
+class _SharedMainScreenState extends ConsumerState<SharedMainScreen> {
   late int _currentIndex;
 
   @override
@@ -31,16 +33,19 @@ class _SharedMainScreenState extends State<SharedMainScreen> {
       backgroundColor: AppColors.background,
       elevation: 0,
       scrolledUnderElevation: 0,
-      title: const Row(
+      title: Row(
         children: [
           CircleAvatar(
             radius: 20,
             backgroundImage: NetworkImage(
-              'https://i.pravatar.cc/150?img=11',
+              "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um)=>um.user?.name))}/profile/photo",
+              headers: {
+                'Authorization':"Bearer ${ref.watch(userControllerProvider.select((um)=>um.token))}"
+              }
             ),
           ),
-          SizedBox(width: 12),
-          Text(
+          const SizedBox(width: 12),
+          const Text(
             "Suara Mawa",
             style: TextStyle(
               fontSize: 20,
@@ -131,3 +136,40 @@ class _SharedMainScreenState extends State<SharedMainScreen> {
     );
   }
 }
+
+PreferredSizeWidget buildAppBar(WidgetRef ref) {
+    return AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      title: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundImage: NetworkImage(
+              "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um)=>um.user?.name))}/profile/photo",
+              headers: {
+                'Authorization':"Bearer ${ref.watch(userControllerProvider.select((um)=>um.token))}"
+              }
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            "Suara Mawa",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none_outlined, color: AppColors.primary),
+          onPressed: () {},
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }

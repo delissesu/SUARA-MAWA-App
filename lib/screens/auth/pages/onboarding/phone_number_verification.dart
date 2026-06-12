@@ -80,13 +80,13 @@ class _PhoneNumberVerificationState extends State<PhoneNumberVerification> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
+                    horizontal: 40,
                     vertical: 40,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
 
                       const Text(
                         "Verifikasi Nomor Telepon Anda",

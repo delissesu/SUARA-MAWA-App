@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:suara_mawa/screens/profile/index.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  @override
   Widget build(BuildContext context) {
-    return Text("Suki Liar Profile screen");
+    return const Center(
+      child: ProfilePage(),
+    );
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
 import 'package:suara_mawa/screens/auth/controller/onboarding.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
-import 'package:suara_mawa/screens/auth/pages/onboarding/email_verification.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/screens/auth/components/progress_indicator.dart';
 
@@ -18,8 +17,7 @@ class NimForm extends StatefulWidget {
 class _NimFormState extends State<NimForm> {
   late String email;
   final _authService = AuthService();
-  bool _wait = true;
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _nimFilled = false;
   final nimController = TextEditingController(text: '');
   final textStyle = const TextStyle(color: Colors.black, fontSize: 16);
@@ -32,12 +30,18 @@ class _NimFormState extends State<NimForm> {
 
   Future<void> _loadData() async {
     final user = await _authService.getUser();
-    final detail = await _authService.getMahasiswaDetail();
+    final nim = (await _authService.getMahasiswaDetail())?['nim'];
     print(user);
+    final isFilled = nim != null;
+    if (isFilled) {
+      setState(() {
+        nimController.text = nim;
+      });
+    }
     setState(() {
       email = user?.email ?? 'Not found';
-      _nimFilled = detail != null;
-      _wait = false;
+      _nimFilled = isFilled;
+      _isLoading = false;
     });
   }
 
@@ -76,100 +80,141 @@ class _NimFormState extends State<NimForm> {
 
   @override
   Widget build(BuildContext context) {
-    return _wait
-        ? const Center(
-            child: CircularProgressIndicator(
-              color: Colors.black,
-              strokeWidth: 2,
-            ),
-          )
-        : SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 10,
-              children: [
-                const SizedBox(height: 60),
-                StepProgressView(
+    return Stack(
+      children: [
+        SafeArea(
+          child: Column(
+            children: [
+              // ======================
+              // FIXED PROGRESS BAR
+              // ======================
+              Padding(
+                padding: const EdgeInsets.only(top: 40, left: 24, right: 24),
+                child: StepProgressView(
                   width: MediaQuery.of(context).size.width,
                   currentStep: 2,
                   activeColor: AppColors.primary,
                   titles: Onboarding.stepNames,
                 ),
-                const SizedBox(height: 80),
-                const Text(
-                  "Isi NIM Anda",
-                  textAlign: TextAlign.center,
-                  softWrap: true,
-                  maxLines: 2,
-                  style: TextStyle(color: Colors.black, fontSize: 26),
-                ),
-                TextFormField(
-                  style: textStyle,
-                  decoration: InputDecoration(
-                    hintStyle: textStyle,
-                    hintText: 'Password',
-                    labelStyle: textStyle,
-                    labelText: 'Password',
-                    errorStyle: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black, width: 2.0),
-                    ),
+              ),
+
+              // ======================
+              // SCROLLABLE CONTENT
+              // ======================
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 40,
                   ),
-                  controller: nimController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Masukkan password';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _handleAppendNIM,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _nimFilled
-                        ? Colors.green
-                        : AppColors.primary,
-                    minimumSize: const Size(double.infinity, 44),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 2,
-                        )
-                      : (_nimFilled
-                            ? const Text(
-                                "Update NIM",
-                                style: TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 16,
-                                ),
-                              )
-                            : const Text(
-                                "Tambahkan NIM",
-                                style: TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 16,
-                                ),
-                              )),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const VerifyEmailPage(),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 10,
+                    children: [
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Isi NIM Anda",
+                        textAlign: TextAlign.center,
+                        softWrap: true,
+                        maxLines: 2,
+                        style: TextStyle(color: Colors.black, fontSize: 26),
                       ),
-                    );
-                  },
-                  child: Text("Kembali"),
+                      TextFormField(
+                        style: textStyle,
+                        decoration: InputDecoration(
+                          hintStyle: textStyle,
+                          hintText: 'NIM',
+                          labelStyle: textStyle,
+                          labelText: 'NIM',
+                          errorStyle: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                        controller: nimController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Masukkan NIM';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      if (_nimFilled) ElevatedButton(
+                        onPressed: ()async {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PhonePage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          minimumSize: const Size(double.infinity, 44),
+                        ),
+                        child: const Text(
+                                "Selanjutnya",
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ),
+                      ElevatedButton(
+                        onPressed: _handleAppendNIM,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          minimumSize: const Size(double.infinity, 44),
+                        ),
+                        child: (_nimFilled
+                                  ? const Text(
+                                      "Update NIM",
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 16,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Tambahkan NIM",
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 16,
+                                      ),
+                                    )),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VerifyEmailPage(),
+                            ),
+                          );
+                        },
+                        child: Text("Kembali"),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          );
+              ),
+            ],
+          ),
+        ),
+        if (_isLoading)
+          const Opacity(
+            opacity: 0.6,
+            child: ModalBarrier(dismissible: false, color: Colors.black),
+          ),
+        if (_isLoading) const Center(child: CircularProgressIndicator()),
+      ],
+    );
   }
 }
