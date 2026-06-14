@@ -179,7 +179,7 @@ class ReportService {
     required String description,
     required double locationLat,
     required double locationLong,
-    String? locationDetail,
+    String? location,
     required bool isPublic,
     required int departmentId,
     required int categoryId,
@@ -198,8 +198,8 @@ class ReportService {
         'departmentId': departmentId,
         'categoryId': categoryId,
       };
-      if (locationDetail != null) {
-        dataMap['locationDetail'] = locationDetail;
+      if (location != null) {
+        dataMap['location'] = location;
       }
 
       final formData = FormData.fromMap(dataMap);

@@ -98,7 +98,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
         description: _descriptionController.text.trim(),
         locationLat: _selectedLocation?.latitude ?? 0.0,
         locationLong: _selectedLocation?.longitude ?? 0.0,
-        locationDetail: null,
+        location: null,
         isPublic: true,
         departmentId: _selectedDepartmentId!,
         categoryId: _selectedCategoryId!,

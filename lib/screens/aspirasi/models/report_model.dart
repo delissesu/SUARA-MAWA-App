@@ -31,7 +31,7 @@ class ReportListItem {
   final int id;
   final String title;
   final String description;
-  final String? locationDetail;
+  final String? location;
   final int likes;
   final String authorName;
   final String departmentName;
@@ -46,7 +46,7 @@ class ReportListItem {
     required this.id,
     required this.title,
     required this.description,
-    this.locationDetail,
+    this.location,
     required this.likes,
     required this.authorName,
     required this.departmentName,
@@ -61,7 +61,7 @@ class ReportListItem {
       id: json['id'] as int,
       title: json['title'] as String,
       description: json['description'] as String,
-      locationDetail: json['locationDetail'] as String?,
+      location: json['location'] as String?,
       likes: (json['likes'] as num?)?.toInt() ?? 0,
       authorName: json['authorName'] as String? ?? '',
       departmentName: json['departmentName'] as String? ?? '',
@@ -228,7 +228,7 @@ class ReportDetail {
   final String description;
   final double locationLat;
   final double locationLong;
-  final String? locationDetail;
+  final String? location;
   final bool isPublic;
   final int likes;
   final ReportAuthor author;
@@ -244,7 +244,7 @@ class ReportDetail {
     required this.description,
     required this.locationLat,
     required this.locationLong,
-    this.locationDetail,
+    this.location,
     required this.isPublic,
     required this.likes,
     required this.author,
@@ -262,7 +262,7 @@ class ReportDetail {
       description: json['description'] as String,
       locationLat: (json['locationLat'] as num).toDouble(),
       locationLong: (json['locationLong'] as num).toDouble(),
-      locationDetail: json['locationDetail'] as String?,
+      location: json['location'] as String?,
       isPublic: json['isPublic'] as bool? ?? true,
       likes: (json['likes'] as num?)?.toInt() ?? 0,
       author: ReportAuthor.fromJson(

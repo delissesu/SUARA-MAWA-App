@@ -146,7 +146,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
       currentStatus: DetailStatus.fromApiStatus(detail.latestStatus),
       attachmentImagePath: attachmentUrl,
       detailDescription: detail.description,
-      locationAddress: detail.locationDetail ?? 'No location detail provided',
+      locationAddress: detail.location ?? 'No location detail provided',
       locationLat: detail.locationLat,
       locationLong: detail.locationLong,
       timeline: timeline,

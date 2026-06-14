@@ -211,8 +211,17 @@ class ProfilePreview extends ConsumerWidget {
         (userModel) => userModel.user?.userRole?.name,
       ),
     );
-    final department =
-        ref.watch(userControllerProvider.select((userModel) => userModel.penindakDetail?.department));
+    final departmentOrNim = ref.watch(
+      userControllerProvider.select((userModel) {
+        final role = userModel.user?.userRole?.name?.toLowerCase();
+        if (role == 'penindak') {
+          return userModel.penindakDetail?.department ?? '-';
+        } else if (role == 'mahasiswa') {
+          return userModel.mahasiswaDetail?.nim ?? '-';
+        }
+        return '-';
+      }),
+    );
     return SizedBox(
       width: double.infinity,
       child: Card(
@@ -246,7 +255,7 @@ class ProfilePreview extends ConsumerWidget {
 
               const SizedBox(height: 8),
 
-              Chip(label: Text("$userRole - $department")),
+              Chip(label: Text("$userRole - $departmentOrNim")),
             ],
           ),
         ),

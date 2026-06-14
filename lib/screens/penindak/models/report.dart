@@ -9,6 +9,9 @@ class Report {
   final String latestStatus;
   final String? thumbnail;
   final DateTime createdAt;
+  final double? locationLat;
+  final double? locationLong;
+  final String? location;
 
   Report({
     required this.id,
@@ -21,6 +24,9 @@ class Report {
     required this.latestStatus,
     this.thumbnail,
     required this.createdAt,
+    this.locationLat,
+    this.locationLong,
+    this.location,
   });
 
   factory Report.fromJson(Map<String, dynamic> json) {
@@ -35,6 +41,41 @@ class Report {
       latestStatus: json['latestStatus'] ?? '',
       thumbnail: json['thumbnail'],
       createdAt: DateTime.parse(json['createdAt']),
+      locationLat: (json['locationLat'] as num?)?.toDouble(),
+      locationLong: (json['locationLong'] as num?)?.toDouble(),
+      location: json['location'] as String?,
+    );
+  }
+
+  Report copyWith({
+    int? id,
+    String? title,
+    String? description,
+    int? likes,
+    String? authorName,
+    String? departmentName,
+    String? categoriesName,
+    String? latestStatus,
+    String? thumbnail,
+    DateTime? createdAt,
+    double? locationLat,
+    double? locationLong,
+    String? location,
+  }) {
+    return Report(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      likes: likes ?? this.likes,
+      authorName: authorName ?? this.authorName,
+      departmentName: departmentName ?? this.departmentName,
+      categoriesName: categoriesName ?? this.categoriesName,
+      latestStatus: latestStatus ?? this.latestStatus,
+      thumbnail: thumbnail ?? this.thumbnail,
+      createdAt: createdAt ?? this.createdAt,
+      locationLat: locationLat ?? this.locationLat,
+      locationLong: locationLong ?? this.locationLong,
+      location: location ?? this.location,
     );
   }
 }

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
+import 'package:suara_mawa/screens/penindak/services/report_service.dart';
+import 'package:suara_mawa/screens/penindak/models/report.dart';
+import 'package:suara_mawa/screens/penindak/task_detail_screen.dart';
+import 'package:suara_mawa/screens/penindak/task_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,13 +15,93 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final ReportService _reportService = ReportService();
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  int _totalAspirasi = 0;
+  int _perluDikerjakan = 0;
+  int _perluRevisi = 0;
+  int _selesai = 0;
+
+  List<Report> _recentReports = [];
+
+  List<Report> _allReports = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final departmentId = await _reportService.getUserDepartmentId();
+      if (departmentId == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Gagal mendapatkan data departemen pengguna.';
+        });
+        return;
+      }
+
+      final results = await Future.wait([
+        _reportService.fetchReports(departmentId: departmentId, status: 'in_progress'),
+        _reportService.fetchReports(departmentId: departmentId, status: 'revision'),
+        _reportService.fetchReports(departmentId: departmentId, status: 'resolved'),
+      ]);
+
+      final inProgress = results[0];
+      final revision = results[1];
+      final resolved = results[2];
+
+      final allReports = [...inProgress, ...revision, ...resolved];
+      allReports.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      // Fetch details for all reports to get location
+      final detailedReports = await Future.wait(allReports.map((report) async {
+        final detail = await _reportService.fetchReportDetail(report.id);
+        if (detail != null) {
+          final lat = (detail['locationLat'] as num?)?.toDouble();
+          final lng = (detail['locationLong'] as num?)?.toDouble();
+          final loc = detail['location'] as String?;
+          return report.copyWith(locationLat: lat, locationLong: lng, location: loc);
+        }
+        return report;
+      }));
+
+      setState(() {
+        _perluDikerjakan = inProgress.length;
+        _perluRevisi = revision.length;
+        _selesai = resolved.length;
+        _totalAspirasi = _perluDikerjakan + _perluRevisi + _selesai;
+        _allReports = detailedReports;
+        _recentReports = detailedReports.take(3).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Terjadi kesalahan saat memuat data.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        // child: Expanded( // Expanded causing error, advice to refacctor and use expanded in Row, Column, or Flex parent widget
+        child: RefreshIndicator(
+          onRefresh: _loadDashboardData,
+          color: AppColors.primary,
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -28,22 +112,101 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   _buildMapSection(),
                   const SizedBox(height: 24),
-                  _buildStatsSection(),
-                  const SizedBox(height: 32),
-                  _buildInterventionsHeader(),
-                  const SizedBox(height: 16),
-                  _buildInterventionsList(),
-                  const SizedBox(height: 24),
+                  if (_isLoading)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: CircularProgressIndicator(color: AppColors.primary),
+                      ),
+                    )
+                  else if (_errorMessage != null)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          children: [
+                            Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              _errorMessage!,
+                              style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else ...[
+                    _buildStatsSection(),
+                    const SizedBox(height: 32),
+                    _buildInterventionsHeader(),
+                    const SizedBox(height: 16),
+                    _buildInterventionsList(),
+                    const SizedBox(height: 24),
+                  ],
                 ],
               ),
             ),
           ),
-        // ),
+        ),
+      ),
+    );
+  }
+
+  void _showMarkerPopup(Report report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(report.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Kategori: ${report.categoriesName}", style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 4),
+            Text("Lokasi: ${report.location ?? '-'}", style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 8),
+            Text(report.description, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Tutup"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TaskDetailScreen(reportId: report.id)),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            child: const Text("Detail"),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildMapSection() {
+    final markers = _allReports.where((r) => r.locationLat != null && r.locationLong != null).map((report) {
+      return Marker(
+        point: LatLng(report.locationLat!, report.locationLong!),
+        width: 40,
+        height: 40,
+        child: GestureDetector(
+          onTap: () => _showMarkerPopup(report),
+          child: Icon(
+            Icons.location_pin,
+            color: Colors.red[700],
+            size: 40,
+          ),
+        ),
+      );
+    }).toList();
+
     return Container(
       height: 220,
       width: double.infinity,
@@ -63,8 +226,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             FlutterMap(
               options: const MapOptions(
-                initialCenter: LatLng(-6.186486, 106.829140),
-                initialZoom: 13.0,
+                initialCenter: LatLng(-8.165049, 113.716424),
+                initialZoom: 15.0,
                 maxZoom: 18.0,
                 minZoom: 3.0,
               ),
@@ -73,20 +236,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.suara.app',
                 ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: const LatLng(-6.186486, 106.829140),
-                      width: 40,
-                      height: 40,
-                      child: Icon(
-                        Icons.location_pin,
-                        color: Colors.red[700],
-                        size: 40,
-                      ),
-                    ),
-                  ],
-                ),
+                MarkerLayer(markers: markers),
               ],
             ),
           ],
@@ -103,7 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               child: _buildStatCard(
                 title: "Total Aspirasi",
-                number: "24",
+                number: _totalAspirasi.toString(),
                 icon: Icons.assignment_outlined,
                 bgColor: AppColors.activePrimary,
                 iconBgColor: AppColors.background,
@@ -114,8 +264,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
-                title: "Diproses",
-                number: "12",
+                title: "Perlu Dikerjakan",
+                number: _perluDikerjakan.toString(),
                 icon: Icons.hourglass_top_outlined,
                 bgColor: AppColors.activePrimary,
                 iconBgColor: AppColors.background,
@@ -130,8 +280,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Expanded(
               child: _buildStatCard(
-                title: "Belum dikerjakan",
-                number: "24",
+                title: "Perlu Revisi",
+                number: _perluRevisi.toString(),
                 icon: Icons.assignment_outlined,
                 bgColor: AppColors.activePrimary,
                 iconBgColor: AppColors.background,
@@ -142,8 +292,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
-                title: "Selesai (Bulan ini)",
-                number: "12",
+                title: "Selesai",
+                number: _selesai.toString(),
                 icon: Icons.check,
                 bgColor: AppColors.activePrimary,
                 iconBgColor: AppColors.background,
@@ -211,7 +361,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         GestureDetector(
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TaskListScreen()),
+            );
+          },
           child: Row(
             children: [
               Text(
@@ -232,26 +387,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildInterventionsList() {
+    if (_recentReports.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            "Belum ada aspirasi terbaru.",
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ),
+      );
+    }
+
     return Column(
-      children: [
-        _buildInterventionCard(
-          title: "Access Point di B1 fasilkom tidak nyala",
-          category: "Prasarana",
-          description:
-              "Mohon diperbaiki access point nya. Soalnya besok akan diadakan UTS yang sangat sulit",
-        ),
-        const SizedBox(height: 16),
-        _buildInterventionCard(
-          title: "PPT belum dikasih",
-          category: "Mata Kuliah",
-          description:
-              "Pada mata kuliah ilmu hitam, ppt dari pertemuan awal sampai pertemuan 9 masih belum diberikan",
-        ),
-      ],
+      children: _recentReports.map((report) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: _buildInterventionCard(
+            reportId: report.id,
+            title: report.title,
+            category: report.categoriesName,
+            description: report.description,
+          ),
+        );
+      }).toList(),
     );
   }
 
   Widget _buildInterventionCard({
+    required int reportId,
     required String title,
     required String category,
     required String description,
@@ -302,6 +466,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 16),
           Text(
             description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 14,
               color: AppColors.subtext1,
@@ -313,7 +479,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TaskDetailScreen(reportId: reportId),
+                      ),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -329,28 +502,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Tindak",
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+              )
             ],
           ),
         ],

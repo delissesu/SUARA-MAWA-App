@@ -734,8 +734,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     final double? lng = (data['locationLong'] as num?)?.toDouble();
     if (lat == null || lng == null) return const SizedBox.shrink();
 
-    final String? locationDetail = data['locationDetail'] as String?;
-    final bool hasDetail = locationDetail != null && locationDetail.isNotEmpty;
+    final String? location = data['location'] as String?;
+    final bool hasDetail = location != null && location.isNotEmpty;
     final mapCenter = LatLng(lat, lng);
 
     return Container(
@@ -813,7 +813,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      locationDetail,
+                      location,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[700],
