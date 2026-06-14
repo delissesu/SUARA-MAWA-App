@@ -212,7 +212,7 @@ class ProfilePreview extends ConsumerWidget {
       ),
     );
     final department =
-        'Default'; //ref.watch(userControllerProvider.select((userModel) => userModel.user?.department));
+        ref.watch(userControllerProvider.select((userModel) => userModel.penindakDetail?.department));
     return SizedBox(
       width: double.infinity,
       child: Card(

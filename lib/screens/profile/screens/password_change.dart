@@ -242,8 +242,7 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage> {
                         child: ElevatedButton(
                           onPressed: () async {
                             // 4. Trigger validation across all fields
-                            if (true){
-                              // _formKey.currentState!.validate()) {
+                            if (_formKey.currentState!.validate()) {
                               // Process your valid data here
                               setState(() {
                                 _isLoading = true;

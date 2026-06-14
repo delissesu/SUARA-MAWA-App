@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
 import 'package:flutter/gestures.dart';
+import 'package:suara_mawa/screens/auth/pages/resetPassword/send_reset.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
 
@@ -254,8 +255,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       ),
                       ElevatedButton(
                         onPressed: () async {
-                          if (true) {
-                            //_formKey.currentState!.validate()) {
+                          if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
 
                             final res = await loginEmail(
@@ -352,6 +352,33 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                         ),
                       ),
                       const SizedBox(height: 10),
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: const TextStyle(color: Colors.black, fontSize: 16),
+                          children: [
+                            const TextSpan(text: 'Lupa password? '),
+                            TextSpan(
+                              text: 'Reset Password',
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  // pindah halaman register
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const ResetPasswordPage(),
+                                    ),
+                                  );
+                                },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 5),
                       RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(

@@ -56,10 +56,10 @@ final List<AspirasiItem> daftarAspirasi = [
   ),
 ];
 
-void main() => runApp(const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: DashboardAdmin(),
-    ));
+// void main() => runApp(const MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: DashboardAdmin(),
+//     ));
 
 class DashboardAdmin extends StatefulWidget {
   const DashboardAdmin({super.key});
