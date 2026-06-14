@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:suara_mawa/screens/admin/admin_dashboard_screen.dart';
 import 'package:suara_mawa/screens/aspirasi/aspirasi_main_screen.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
 import 'package:suara_mawa/screens/penindak/penindak_main_screen.dart';
@@ -506,6 +507,8 @@ class AuthService {
       page = const PenindakMainScreen();
     } else if (userRoleId == 1) {
       page = const AspirasiMainScreen();
+    } else if (userRoleId == 3) {
+      page = const DashboardAdmin();
     } else {
       page = DashboardPage();
     }
@@ -614,6 +617,19 @@ class AuthService {
   //       break;
   //   }
   // }
+
+  Future<bool> sendResetPasswordRequest(String email) async {
+    try {
+      final res = await _dio.post(
+        '/user/request-password-reset',
+        data: {'email': email},
+      );
+      if (res.data['status']) return true;
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 
   String _getErrorCode(DioException e) {
     final data = e.response?.data;

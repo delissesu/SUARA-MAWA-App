@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <application
-        android:label="suara_mawa"
+        android:label="Suara Mawa"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
@@ -41,9 +41,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" 
-                    android:host="0bd0-114-10-39-64.ngrok-free.app"
-                    android:pathPrefix="/sign-in/google/success" />
+                <data
+                    android:scheme="suaramawa"
+                    android:host="app" />
                 <!-- <data android:scheme="https" android:host="subdomain.domainkamu.com" android:pathPrefix="/sign-in/google" /> -->
             </intent-filter>
         </activity>
