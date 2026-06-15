@@ -346,54 +346,62 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: const FormAppBar(),
-      body: _isLoadingLookups
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FormPageHeader(),
-                    const SizedBox(height: 24),
-                    AspirationDetailsSection(
-                      titleController: _titleController,
-                      descriptionController: _descriptionController,
-                      selectedCategoryId: _selectedCategoryId,
-                      categories: _categories,
-                      onCategoryChanged: (value) =>
-                          setState(() => _selectedCategoryId = value),
-                      selectedDepartmentId: _selectedDepartmentId,
-                      departments: _departments,
-                      onDepartmentChanged: (value) =>
-                          setState(() => _selectedDepartmentId = value),
-                    ),
-                    const SizedBox(height: 16),
-                    LocationSection(
-                      selectedLocation: _selectedLocation,
-                      onUseCurrentGps: _handleUseCurrentGps,
-                      isFetchingGps: _isFetchingGps,
-                      onLocationChanged: _handleLocationChanged,
-                      locationDetailController: _locationDetailController,
-                    ),
-                    const SizedBox(height: 16),
-                    AttachmentsSection(
-                      onTakePhoto: _handleTakePhoto,
-                      onUploadGallery: _handleUploadGallery,
-                      attachments: _attachments,
-                      onRemoveAttachment: _handleRemoveAttachment,
-                    ),
-                    const SizedBox(height: 32),
-                    FormActionButtons(
-                      isLoading: _isSubmitting,
-                      onSubmit: _handleSubmit,
-                      onCancel: () => Navigator.of(context).maybePop(),
-                    ),
-                  ],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: _isLoadingLookups
+            ? const Center(
+                key: ValueKey('loading'),
+                child: CircularProgressIndicator(),
+              )
+            : Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const FormPageHeader(),
+                      const SizedBox(height: 24),
+                      AspirationDetailsSection(
+                        titleController: _titleController,
+                        descriptionController: _descriptionController,
+                        selectedCategoryId: _selectedCategoryId,
+                        categories: _categories,
+                        onCategoryChanged: (value) =>
+                            setState(() => _selectedCategoryId = value),
+                        selectedDepartmentId: _selectedDepartmentId,
+                        departments: _departments,
+                        onDepartmentChanged: (value) =>
+                            setState(() => _selectedDepartmentId = value),
+                      ),
+                      const SizedBox(height: 16),
+                      LocationSection(
+                        selectedLocation: _selectedLocation,
+                        onUseCurrentGps: _handleUseCurrentGps,
+                        isFetchingGps: _isFetchingGps,
+                        onLocationChanged: _handleLocationChanged,
+                        locationDetailController: _locationDetailController,
+                      ),
+                      const SizedBox(height: 16),
+                      AttachmentsSection(
+                        onTakePhoto: _handleTakePhoto,
+                        onUploadGallery: _handleUploadGallery,
+                        attachments: _attachments,
+                        onRemoveAttachment: _handleRemoveAttachment,
+                      ),
+                      const SizedBox(height: 32),
+                      FormActionButtons(
+                        isLoading: _isSubmitting,
+                        onSubmit: _handleSubmit,
+                        onCancel: () => Navigator.of(context).maybePop(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

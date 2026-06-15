@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
 import 'package:suara_mawa/screens/aspirasi/services/report_service.dart';
 import 'package:suara_mawa/screens/aspirasi/detail_aspirasi/detail_aspirasi_screen.dart';
+import 'package:suara_mawa/utils/page_transitions.dart';
 import '../beranda_mahasiswa/widgets/floating_submit_button.dart';
 import '../form_aspirasi/form_aspirasi_screen.dart';
 import 'models/aspirasi_item.dart';
@@ -131,8 +132,8 @@ class _DaftarAspirasiScreenState extends State<DaftarAspirasiScreen> {
 
   void _handleViewDetails(AspirasiItem item) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => DetailAspirasiScreen(reportId: item.reportId),
+      slidePageRoute(
+        DetailAspirasiScreen(reportId: item.reportId),
       ),
     );
   }
@@ -204,7 +205,7 @@ class _DaftarAspirasiScreenState extends State<DaftarAspirasiScreen> {
           FloatingSubmitButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const FormAspirasiScreen()),
+                slidePageRoute(const FormAspirasiScreen()),
               );
             },
           ),

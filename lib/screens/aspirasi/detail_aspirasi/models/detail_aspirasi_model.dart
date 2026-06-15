@@ -88,6 +88,7 @@ class OfficialResponse {
 }
 
 class DetailAspirasiModel {
+  final int reportId;
   final String aspirationId;
   final String category;
   final String dateLabel;
@@ -103,6 +104,7 @@ class DetailAspirasiModel {
   final List<int> evidenceIds;
 
   const DetailAspirasiModel({
+    required this.reportId,
     required this.aspirationId,
     required this.category,
     required this.dateLabel,

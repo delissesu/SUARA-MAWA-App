@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
 import 'package:suara_mawa/screens/aspirasi/services/report_service.dart';
 import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
+import 'package:suara_mawa/utils/page_transitions.dart';
 import 'package:suara_mawa/utils/user_controller.dart';
 import 'widgets/welcome_header.dart';
 import 'widgets/status_cards_section.dart';
@@ -17,7 +18,8 @@ class BerandaMahasiswaScreen extends StatefulWidget {
   State<BerandaMahasiswaScreen> createState() => _BerandaMahasiswaScreenState();
 }
 
-class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen> {
+class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen>
+    with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final ReportService _reportService = ReportService();
 
@@ -28,10 +30,93 @@ class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen> {
   List<ReportListItem> _recentItems = [];
   bool _isLoading = true;
 
+  // Staggered entrance animation
+  late AnimationController _entranceController;
+  late Animation<double> _welcomeFade;
+  late Animation<Offset> _welcomeSlide;
+  late Animation<double> _statusFade;
+  late Animation<Offset> _statusSlide;
+  late Animation<double> _bannerFade;
+  late Animation<Offset> _bannerSlide;
+  late Animation<double> _activityFade;
+  late Animation<Offset> _activitySlide;
+
   @override
   void initState() {
     super.initState();
+
+    _entranceController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
+
+    // Welcome header: 0.0 → 0.35
+    _welcomeFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.0, 0.35, curve: Curves.easeOut),
+      ),
+    );
+    _welcomeSlide =
+        Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.0, 0.35, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // Status cards: 0.15 → 0.55
+    _statusFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.15, 0.55, curve: Curves.easeOut),
+      ),
+    );
+    _statusSlide =
+        Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.15, 0.55, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // Submit banner: 0.35 → 0.75
+    _bannerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.35, 0.75, curve: Curves.easeOut),
+      ),
+    );
+    _bannerSlide =
+        Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.35, 0.75, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // Recent activity: 0.50 → 1.0
+    _activityFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.50, 1.0, curve: Curves.easeOut),
+      ),
+    );
+    _activitySlide =
+        Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.50, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -77,9 +162,13 @@ class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen> {
         _resolvedCount = resolved;
         _isLoading = false;
       });
+
+      // Play staggered entrance after data loads
+      _entranceController.forward();
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+      _entranceController.forward();
     }
   }
 
@@ -88,7 +177,10 @@ class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       body: RefreshIndicator(
-        onRefresh: _loadData,
+        onRefresh: () async {
+          _entranceController.reset();
+          await _loadData();
+        },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 100),
@@ -98,7 +190,14 @@ class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 24),
-                WelcomeHeader(studentName: _studentName),
+                // Animated welcome header
+                FadeTransition(
+                  opacity: _welcomeFade,
+                  child: SlideTransition(
+                    position: _welcomeSlide,
+                    child: WelcomeHeader(studentName: _studentName),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 _isLoading
                     ? const Center(
@@ -110,36 +209,55 @@ class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen> {
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          StatusCardsSection(
-                            pendingCount: _pendingCount,
-                            processedCount: _processedCount,
-                            resolvedCount: _resolvedCount,
+                          // Animated status cards
+                          FadeTransition(
+                            opacity: _statusFade,
+                            child: SlideTransition(
+                              position: _statusSlide,
+                              child: StatusCardsSection(
+                                pendingCount: _pendingCount,
+                                processedCount: _processedCount,
+                                resolvedCount: _resolvedCount,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          SubmitBanner(
-                            onSubmitPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
+                          // Animated submit banner
+                          FadeTransition(
+                            opacity: _bannerFade,
+                            child: SlideTransition(
+                              position: _bannerSlide,
+                              child: SubmitBanner(
+                                onSubmitPressed: () {
+                                  Navigator.of(context).push(
+                                    slidePageRoute(
                                       const FormAspirasiScreen(),
-                                ),
-                              );
-                            },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 28),
-                          RecentActivitySection(
-                            recentItems: _recentItems,
-                            isLoading: _isLoading,
-                            onViewAll: () {
-                              // Navigate to History tab (index 1)
-                              // via parent SharedMainScreen
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
+                          // Animated recent activity
+                          FadeTransition(
+                            opacity: _activityFade,
+                            child: SlideTransition(
+                              position: _activitySlide,
+                              child: RecentActivitySection(
+                                recentItems: _recentItems,
+                                isLoading: _isLoading,
+                                onViewAll: () {
+                                  // Navigate to History tab (index 1)
+                                  // via parent SharedMainScreen
+                                  Navigator.of(context).push(
+                                    slidePageRoute(
                                       const DaftarAspirasiScreen(),
-                                ),
-                              );
-                            },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 16),
                         ],

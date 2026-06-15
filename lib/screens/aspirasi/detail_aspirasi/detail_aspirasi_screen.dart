@@ -137,6 +137,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
     }
 
     return DetailAspirasiModel(
+      reportId: detail.id,
       aspirationId: 'RPT-${detail.id.toString().padLeft(3, '0')}',
       category: detail.category.name,
       dateLabel: detail.reportDate != null
@@ -185,106 +186,110 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF0F2F5),
-        appBar: const DetailAppBar(),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_error != null || _data == null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF0F2F5),
-        appBar: const DetailAppBar(),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 48, color: Colors.grey.shade400),
-              const SizedBox(height: 12),
-              Text(
-                _error ?? 'Terjadi kesalahan',
-                style: TextStyle(
-                  fontFamily: 'PublicSans',
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: _fetchDetail,
-                child: const Text('Coba Lagi'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final data = _data!;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: const DetailAppBar(),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // ── Header: category, ID, title, status ──────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            sliver: SliverToBoxAdapter(child: DetailHeaderSection(item: data)),
-          ),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: _isLoading
+            ? const Center(
+                key: ValueKey('loading'),
+                child: CircularProgressIndicator(),
+              )
+            : (_error != null || _data == null)
+                ? _buildErrorView()
+                : _buildDetailView(_data!),
+      ),
+    );
+  }
 
-          // ── Attachment photo ─────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            sliver: SliverToBoxAdapter(
-              child: AttachmentImageSection(imageUrl: data.attachmentImagePath),
+  Widget _buildErrorView() {
+    return Center(
+      key: const ValueKey('error'),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          Text(
+            _error ?? 'Terjadi kesalahan',
+            style: TextStyle(
+              fontFamily: 'PublicSans',
+              fontSize: 14,
+              color: Colors.grey.shade600,
             ),
           ),
-
-          // ── Aspiration details ────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            sliver: SliverToBoxAdapter(
-              child: AspirationDetailCard(description: data.detailDescription),
-            ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: _fetchDetail,
+            child: const Text('Coba Lagi'),
           ),
-
-          // ── Reported location ─────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            sliver: SliverToBoxAdapter(
-              child: ReportedLocationCard(
-                address: data.locationAddress,
-                coordinates: (data.locationLat != null && data.locationLong != null)
-                    ? LatLng(data.locationLat!, data.locationLong!)
-                    : null,
-              ),
-            ),
-          ),
-
-          // ── Resolution timeline ───────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            sliver: SliverToBoxAdapter(
-              child: ResolutionTimelineCard(timeline: data.timeline),
-            ),
-          ),
-
-          // ── Official response ─────────────────────────────────────────
-          if (data.officialResponse != null)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              sliver: SliverToBoxAdapter(
-                child: OfficialResponseCard(response: data.officialResponse!),
-              ),
-            ),
-
-          const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailView(DetailAspirasiModel data) {
+    return CustomScrollView(
+      key: const ValueKey('detail'),
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // ── Header: category, ID, title, status ──────────────────────
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          sliver: SliverToBoxAdapter(child: DetailHeaderSection(item: data)),
+        ),
+
+        // ── Attachment photo ─────────────────────────────────────────
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: AttachmentImageSection(imageUrl: data.attachmentImagePath),
+          ),
+        ),
+
+        // ── Aspiration details ────────────────────────────────────────
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: AspirationDetailCard(description: data.detailDescription),
+          ),
+        ),
+
+        // ── Reported location ─────────────────────────────────────────
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: ReportedLocationCard(
+              address: data.locationAddress,
+              coordinates: (data.locationLat != null && data.locationLong != null)
+                  ? LatLng(data.locationLat!, data.locationLong!)
+                  : null,
+            ),
+          ),
+        ),
+
+        // ── Resolution timeline ───────────────────────────────────────
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: ResolutionTimelineCard(timeline: data.timeline),
+          ),
+        ),
+
+        // ── Official response ─────────────────────────────────────────
+        if (data.officialResponse != null)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            sliver: SliverToBoxAdapter(
+              child: OfficialResponseCard(response: data.officialResponse!),
+            ),
+          ),
+
+        const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+      ],
     );
   }
 }
