@@ -17,7 +17,7 @@ class SearchBarField extends StatelessWidget {
         color: Color(0xFF0D1B2A),
       ),
       decoration: InputDecoration(
-        hintText: 'Search by title, keyword, or ID...',
+        hintText: 'Cari berdasarkan judul, kata kunci, atau ID...',
         hintStyle: TextStyle(
           fontFamily: 'PublicSans',
           fontSize: 14,

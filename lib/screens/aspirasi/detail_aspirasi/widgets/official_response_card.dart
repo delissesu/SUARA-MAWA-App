@@ -11,7 +11,7 @@ class OfficialResponseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InfoSectionCard(
       icon: Icons.mark_chat_read_outlined,
-      title: 'Official Response',
+      title: 'Tanggapan Resmi',
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

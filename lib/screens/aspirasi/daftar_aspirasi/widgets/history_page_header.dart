@@ -9,7 +9,7 @@ class HistoryPageHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Aspiration History',
+          'Daftar Tugas',
           style: TextStyle(
             fontFamily: 'PublicSans',
             fontWeight: FontWeight.w800,
@@ -20,7 +20,7 @@ class HistoryPageHeader extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Track the status and progress of your submitted feedback and reports.',
+          'Pantau status dan perkembangan dari laporan serta aspirasi yang Anda kirimkan.',
           style: TextStyle(
             fontFamily: 'PublicSans',
             fontWeight: FontWeight.w400,

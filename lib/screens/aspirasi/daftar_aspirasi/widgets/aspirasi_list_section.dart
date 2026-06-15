@@ -45,7 +45,7 @@ class _EmptyState extends StatelessWidget {
           Icon(Icons.inbox_outlined, size: 56, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            'No aspirations found',
+            'Aspirasi tidak ditemukan',
             style: TextStyle(
               fontFamily: 'PublicSans',
               fontWeight: FontWeight.w600,
@@ -55,7 +55,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Try a different keyword or filter.',
+            'Coba gunakan kata kunci atau filter yang berbeda.',
             style: TextStyle(
               fontFamily: 'PublicSans',
               fontWeight: FontWeight.w400,

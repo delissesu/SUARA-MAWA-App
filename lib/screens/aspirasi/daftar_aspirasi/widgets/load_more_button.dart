@@ -30,7 +30,7 @@ class LoadMoreButton extends StatelessWidget {
                   ),
                 )
               : const Text(
-                  'Load More History',
+                  'Muat Lebih Banyak',
                   style: TextStyle(
                     fontFamily: 'PublicSans',
                     fontWeight: FontWeight.w600,

@@ -9,7 +9,7 @@ class FormPageHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Submit Aspiration',
+          'Kirim Aspirasi',
           style: TextStyle(
             fontFamily: 'PublicSans',
             fontWeight: FontWeight.w800,
@@ -20,7 +20,7 @@ class FormPageHeader extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Provide details about your observation or request to help us improve.',
+          'Berikan detail mengenai laporan atau permintaan Anda untuk membantu kami menjadi lebih baik.',
           style: TextStyle(
             fontFamily: 'PublicSans',
             fontWeight: FontWeight.w400,

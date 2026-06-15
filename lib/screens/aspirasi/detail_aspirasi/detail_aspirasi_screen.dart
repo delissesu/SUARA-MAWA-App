@@ -40,13 +40,13 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
     if (difference.inDays > 7) {
       return DateFormat('MMM d, yyyy').format(dateTime);
     } else if (difference.inDays >= 1) {
-      return '${difference.inDays}d ago';
+      return '${difference.inDays} hari lalu';
     } else if (difference.inHours >= 1) {
-      return '${difference.inHours}h ago';
+      return '${difference.inHours} jam lalu';
     } else if (difference.inMinutes >= 1) {
-      return '${difference.inMinutes}m ago';
+      return '${difference.inMinutes} menit lalu';
     } else {
-      return 'Just now';
+      return 'Baru saja';
     }
   }
 
@@ -63,7 +63,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
 
       if (detail == null) {
         setState(() {
-          _error = 'Report not found';
+          _error = 'Laporan tidak ditemukan';
           _isLoading = false;
         });
         return;
@@ -103,7 +103,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Failed to load report details';
+        _error = 'Gagal memuat detail laporan';
         _isLoading = false;
       });
     }
@@ -146,7 +146,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
       currentStatus: DetailStatus.fromApiStatus(detail.latestStatus),
       attachmentImagePath: attachmentUrl,
       detailDescription: detail.description,
-      locationAddress: detail.location ?? 'No location detail provided',
+      locationAddress: detail.location ?? 'Detail lokasi tidak diberikan',
       locationLat: detail.locationLat,
       locationLong: detail.locationLong,
       timeline: timeline,
@@ -156,14 +156,14 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
   }
 
   String _statusDescription(ReportStatusItem status) {
-    final authorName = status.author?.name ?? 'System';
+    final authorName = status.author?.name ?? 'Sistem';
     return switch (status.status.toLowerCase()) {
-      'pending' => 'Report submitted and awaiting review.',
-      'in_progress' => 'Being processed by $authorName.',
-      'resolved' => 'Resolved by $authorName.',
-      'revision' => 'Revision requested by $authorName.',
-      'rejected' => 'Rejected by $authorName.',
-      _ => 'Status updated by $authorName.',
+      'pending' => 'Laporan dikirim dan menunggu verifikasi.',
+      'in_progress' => 'Sedang diproses oleh $authorName.',
+      'resolved' => 'Diselesaikan oleh $authorName.',
+      'revision' => 'Revisi diminta oleh $authorName.',
+      'rejected' => 'Ditolak oleh $authorName.',
+      _ => 'Status diperbarui oleh $authorName.',
     };
   }
 
@@ -204,7 +204,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
               Icon(Icons.error_outline, size: 48, color: Colors.grey.shade400),
               const SizedBox(height: 12),
               Text(
-                _error ?? 'Something went wrong',
+                _error ?? 'Terjadi kesalahan',
                 style: TextStyle(
                   fontFamily: 'PublicSans',
                   fontSize: 14,
@@ -214,7 +214,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: _fetchDetail,
-                child: const Text('Try Again'),
+                child: const Text('Coba Lagi'),
               ),
             ],
           ),

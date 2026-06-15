@@ -8,10 +8,10 @@ enum AspirasiStatus {
 
   String get label {
     return switch (this) {
-      AspirasiStatus.all => 'All',
-      AspirasiStatus.verification => 'Verification',
-      AspirasiStatus.inProgress => 'In Progress',
-      AspirasiStatus.done => 'Done',
+      AspirasiStatus.all => 'Semua',
+      AspirasiStatus.verification => 'Verifikasi',
+      AspirasiStatus.inProgress => 'Sedang Diproses',
+      AspirasiStatus.done => 'Selesai',
     };
   }
 

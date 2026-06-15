@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
 import 'package:suara_mawa/screens/aspirasi/services/report_service.dart';
 import 'package:suara_mawa/screens/aspirasi/detail_aspirasi/detail_aspirasi_screen.dart';
+import '../beranda_mahasiswa/widgets/floating_submit_button.dart';
+import '../form_aspirasi/form_aspirasi_screen.dart';
 import 'models/aspirasi_item.dart';
 import 'widgets/history_page_header.dart';
 import 'widgets/search_bar_field.dart';
@@ -139,63 +141,74 @@ class _DaftarAspirasiScreenState extends State<DaftarAspirasiScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
-      body: RefreshIndicator(
-        onRefresh: _loadInitialData,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const HistoryPageHeader(),
-                    const SizedBox(height: 20),
-                    SearchBarField(
-                      controller: _searchController,
-                      onChanged: (value) => setState(() => _searchQuery = value),
-                    ),
-                    const SizedBox(height: 16),
-                    StatusFilterChips(
-                      selectedStatus: _selectedStatus,
-                      onStatusChanged: (status) =>
-                          setState(() => _selectedStatus = status),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: _loadInitialData,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
-            ),
-            if (_isLoading)
-              const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else ...[
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                sliver: SliverToBoxAdapter(
-                  child: AspirasiListSection(
-                    items: _filteredItems,
-                    onViewDetails: _handleViewDetails,
-                  ),
-                ),
-              ),
-              if (_hasMore)
+              slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                   sliver: SliverToBoxAdapter(
-                    child: LoadMoreButton(
-                      isLoading: _isLoadingMore,
-                      onPressed: _handleLoadMore,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const HistoryPageHeader(),
+                        const SizedBox(height: 20),
+                        SearchBarField(
+                          controller: _searchController,
+                          onChanged: (value) => setState(() => _searchQuery = value),
+                        ),
+                        const SizedBox(height: 16),
+                        StatusFilterChips(
+                          selectedStatus: _selectedStatus,
+                          onStatusChanged: (status) =>
+                              setState(() => _selectedStatus = status),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
                   ),
                 ),
-            ],
-          ],
-        ),
+                if (_isLoading)
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else ...[
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, _hasMore ? 0 : 100),
+                    sliver: SliverToBoxAdapter(
+                      child: AspirasiListSection(
+                        items: _filteredItems,
+                        onViewDetails: _handleViewDetails,
+                      ),
+                    ),
+                  ),
+                  if (_hasMore)
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                      sliver: SliverToBoxAdapter(
+                        child: LoadMoreButton(
+                          isLoading: _isLoadingMore,
+                          onPressed: _handleLoadMore,
+                        ),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+          FloatingSubmitButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FormAspirasiScreen()),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

@@ -10,7 +10,7 @@ class AspirationDetailCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InfoSectionCard(
       icon: Icons.description_outlined,
-      title: 'Aspiration Details',
+      title: 'Detail Aspirasi',
       child: Text(
         description,
         style: TextStyle(

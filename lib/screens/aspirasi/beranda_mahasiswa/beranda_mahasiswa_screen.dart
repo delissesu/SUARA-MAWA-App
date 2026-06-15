@@ -7,7 +7,6 @@ import 'widgets/welcome_header.dart';
 import 'widgets/status_cards_section.dart';
 import 'widgets/submit_banner.dart';
 import 'widgets/recent_activity_section.dart';
-import 'widgets/floating_submit_button.dart';
 import '../form_aspirasi/form_aspirasi_screen.dart';
 import '../daftar_aspirasi/daftar_aspirasi_screen.dart';
 
@@ -88,78 +87,67 @@ class _BerandaMahasiswaScreenState extends State<BerandaMahasiswaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: _loadData,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 100),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
-                    WelcomeHeader(studentName: _studentName),
-                    const SizedBox(height: 24),
-                    _isLoading
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(32),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              StatusCardsSection(
-                                pendingCount: _pendingCount,
-                                processedCount: _processedCount,
-                                resolvedCount: _resolvedCount,
-                              ),
-                              const SizedBox(height: 16),
-                              SubmitBanner(
-                                onSubmitPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const FormAspirasiScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 28),
-                              RecentActivitySection(
-                                recentItems: _recentItems,
-                                isLoading: _isLoading,
-                                onViewAll: () {
-                                  // Navigate to History tab (index 1)
-                                  // via parent SharedMainScreen
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const DaftarAspirasiScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                            ],
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 100),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                WelcomeHeader(studentName: _studentName),
+                const SizedBox(height: 24),
+                _isLoading
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          StatusCardsSection(
+                            pendingCount: _pendingCount,
+                            processedCount: _processedCount,
+                            resolvedCount: _resolvedCount,
                           ),
-                  ],
-                ),
-              ),
+                          const SizedBox(height: 16),
+                          SubmitBanner(
+                            onSubmitPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const FormAspirasiScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 28),
+                          RecentActivitySection(
+                            recentItems: _recentItems,
+                            isLoading: _isLoading,
+                            onViewAll: () {
+                              // Navigate to History tab (index 1)
+                              // via parent SharedMainScreen
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const DaftarAspirasiScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+              ],
             ),
           ),
-          FloatingSubmitButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const FormAspirasiScreen()),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }

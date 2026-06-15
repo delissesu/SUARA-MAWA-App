@@ -61,11 +61,11 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
   Widget build(BuildContext context) {
     return SectionCard(
       icon: Icons.article_outlined,
-      title: 'Aspiration Details',
+      title: 'Detail Aspirasi',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const FormFieldLabel(label: 'Title'),
+          const FormFieldLabel(label: 'Judul'),
           TextFormField(
             controller: widget.titleController,
             style: const TextStyle(
@@ -74,7 +74,7 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
               color: Color(0xFF0D1B2A),
             ),
             decoration: _inputDecoration.copyWith(
-              hintText: 'Brief summary of the issue',
+              hintText: 'Ringkasan singkat dari masalah',
               hintStyle: TextStyle(
                 fontFamily: 'PublicSans',
                 fontSize: 14,
@@ -83,18 +83,18 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Title cannot be empty';
+                return 'Judul tidak boleh kosong';
               }
               return null;
             },
           ),
           const SizedBox(height: 16),
-          const FormFieldLabel(label: 'Category'),
+          const FormFieldLabel(label: 'Kategori'),
           DropdownButtonFormField<int>(
             value: widget.selectedCategoryId,
             onChanged: widget.onCategoryChanged,
             hint: Text(
-              'Select a category',
+              'Pilih kategori',
               style: TextStyle(
                 fontFamily: 'PublicSans',
                 fontSize: 14,
@@ -118,7 +118,7 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
             ),
             validator: (value) {
               if (value == null) {
-                return 'Please select a category';
+                return 'Silakan pilih kategori';
               }
               return null;
             },
@@ -132,12 +132,12 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
                 .toList(),
           ),
           const SizedBox(height: 16),
-          const FormFieldLabel(label: 'Department'),
+          const FormFieldLabel(label: 'Tujuan Unit Kerja'),
           DropdownButtonFormField<int>(
             value: widget.selectedDepartmentId,
             onChanged: widget.onDepartmentChanged,
             hint: Text(
-              'Select a department',
+              'Pilih tujuan unit kerja',
               style: TextStyle(
                 fontFamily: 'PublicSans',
                 fontSize: 14,
@@ -161,7 +161,7 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
             ),
             validator: (value) {
               if (value == null) {
-                return 'Please select a department';
+                return 'Silakan pilih tujuan unit kerja';
               }
               return null;
             },
@@ -175,7 +175,7 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
                 .toList(),
           ),
           const SizedBox(height: 16),
-          const FormFieldLabel(label: 'Description'),
+          const FormFieldLabel(label: 'Deskripsi'),
           TextFormField(
             controller: widget.descriptionController,
             maxLines: 5,
@@ -185,7 +185,7 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
               color: Color(0xFF0D1B2A),
             ),
             decoration: _inputDecoration.copyWith(
-              hintText: 'Please provide more details here...',
+              hintText: 'Silakan berikan detail lebih lanjut di sini...',
               hintStyle: TextStyle(
                 fontFamily: 'PublicSans',
                 fontSize: 14,
@@ -195,7 +195,7 @@ class _AspirationDetailsSectionState extends State<AspirationDetailsSection> {
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Description cannot be empty';
+                return 'Deskripsi tidak boleh kosong';
               }
               return null;
             },

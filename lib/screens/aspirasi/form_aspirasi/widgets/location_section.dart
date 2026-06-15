@@ -107,7 +107,7 @@ class _LocationSectionState extends State<LocationSection> {
   Widget build(BuildContext context) {
     return SectionCard(
       icon: Icons.location_on_outlined,
-      title: 'Location',
+      title: 'Lokasi',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -186,7 +186,7 @@ class _LocationSectionState extends State<LocationSection> {
             )
           else
             Text(
-              'Tap on the map or use GPS to pinpoint the location.',
+              'Ketuk peta atau gunakan GPS untuk menentukan lokasi.',
               style: TextStyle(
                 fontFamily: 'PublicSans',
                 fontWeight: FontWeight.w400,
@@ -271,7 +271,7 @@ class _GpsButton extends StatelessWidget {
               const Icon(Icons.my_location_rounded, size: 16, color: Color(0xFF1A2B5F)),
             const SizedBox(width: 6),
             Text(
-              isFetching ? 'Getting Location...' : 'Use Current GPS',
+              isFetching ? 'Mengambil Lokasi...' : 'Gunakan GPS Saat Ini',
               style: const TextStyle(
                 fontFamily: 'PublicSans',
                 fontWeight: FontWeight.w600,

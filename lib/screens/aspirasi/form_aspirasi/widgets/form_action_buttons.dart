@@ -30,7 +30,7 @@ class FormActionButtons extends StatelessWidget {
               ),
             ),
             child: const Text(
-              'Cancel',
+              'Batal',
               style: TextStyle(
                 fontFamily: 'PublicSans',
                 fontWeight: FontWeight.w600,
@@ -66,7 +66,7 @@ class FormActionButtons extends StatelessWidget {
                   )
                 : const Icon(Icons.send_rounded, size: 18, color: Colors.white),
             label: Text(
-              isLoading ? 'Submitting...' : 'Submit Aspiration',
+              isLoading ? 'Mengirimkan...' : 'Kirim Aspirasi',
               style: const TextStyle(
                 fontFamily: 'PublicSans',
                 fontWeight: FontWeight.w700,

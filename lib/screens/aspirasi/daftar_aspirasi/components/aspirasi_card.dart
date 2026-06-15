@@ -87,7 +87,7 @@ class AspirasiCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
-                        'View Details',
+                        'Lihat Detail',
                         style: TextStyle(
                           fontFamily: 'PublicSans',
                           fontWeight: FontWeight.w600,

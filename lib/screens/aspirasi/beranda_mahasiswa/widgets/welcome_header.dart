@@ -11,7 +11,7 @@ class WelcomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome back,\n$studentName',
+          'Selamat datang kembali,\n$studentName',
           style: const TextStyle(
             fontFamily: 'PublicSans',
             fontWeight: FontWeight.w800,
@@ -22,7 +22,7 @@ class WelcomeHeader extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          "Here's a summary of your recent feedback activity.",
+          "Berikut adalah ringkasan aktivitas laporan Anda baru-baru ini.",
           style: TextStyle(
             fontFamily: 'PublicSans',
             fontWeight: FontWeight.w400,

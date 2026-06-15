@@ -30,7 +30,7 @@ class SubmitBanner extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Have something to say?',
+                'Punya sesuatu untuk disampaikan?',
                 style: TextStyle(
                   fontFamily: 'PublicSans',
                   fontWeight: FontWeight.w700,
@@ -40,7 +40,7 @@ class SubmitBanner extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Submit your aspirations, complaints, or suggestions directly to the campus administration.',
+                'Kirimkan aspirasi, keluhan, atau saran Anda secara langsung kepada pihak pengelola kampus.',
                 style: TextStyle(
                   fontFamily: 'PublicSans',
                   fontWeight: FontWeight.w400,
@@ -54,7 +54,7 @@ class SubmitBanner extends StatelessWidget {
                 onPressed: onSubmitPressed ?? () {},
                 icon: const Icon(Icons.add, size: 16, color: Color(0xFF0D1B6E)),
                 label: const Text(
-                  'Submit Aspiration',
+                  'Kirim Aspirasi',
                   style: TextStyle(
                     fontFamily: 'PublicSans',
                     fontWeight: FontWeight.w600,
