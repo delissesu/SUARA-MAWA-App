@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +22,7 @@ class FormAspirasiScreen extends StatefulWidget {
 }
 
 class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
+  static const String _tag = 'FormAspirasiScreen';
   static const int _maxAttachmentBytes = 5 * 1024 * 1024;
   static const Set<String> _allowedAttachmentExtensions = {
     'jpg',
@@ -31,6 +33,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _locationDetailController = TextEditingController();
   final ReportService _reportService = ReportService();
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -55,6 +58,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _locationDetailController.dispose();
     super.dispose();
   }
 
@@ -93,12 +97,20 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
     setState(() => _isSubmitting = true);
 
     try {
+      final locationDetail = _locationDetailController.text.trim();
+      developer.log(
+        '_handleSubmit — lat=${_selectedLocation?.latitude}, '
+        'lng=${_selectedLocation?.longitude}, '
+        'locationDetail="$locationDetail"',
+        name: _tag,
+      );
+
       final (success, message) = await _reportService.createReport(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         locationLat: _selectedLocation?.latitude ?? 0.0,
         locationLong: _selectedLocation?.longitude ?? 0.0,
-        location: null,
+        location: locationDetail.isNotEmpty ? locationDetail : null,
         isPublic: true,
         departmentId: _selectedDepartmentId!,
         categoryId: _selectedCategoryId!,
@@ -149,13 +161,24 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
     );
   }
 
+  void _handleLocationChanged(LatLng newLocation) {
+    developer.log(
+      '_handleLocationChanged — lat=${newLocation.latitude}, '
+      'lng=${newLocation.longitude}',
+      name: _tag,
+    );
+    setState(() => _selectedLocation = newLocation);
+  }
+
   Future<void> _handleUseCurrentGps() async {
+    developer.log('_handleUseCurrentGps — starting GPS fetch', name: _tag);
     setState(() => _isFetchingGps = true);
 
     try {
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        developer.log('_handleUseCurrentGps — location services disabled', name: _tag);
         if (!mounted) return;
         _showSnackBar('Location services are disabled.', isError: true);
         setState(() => _isFetchingGps = false);
@@ -167,6 +190,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          developer.log('_handleUseCurrentGps — permission denied', name: _tag);
           if (!mounted) return;
           _showSnackBar('Location permission denied.', isError: true);
           setState(() => _isFetchingGps = false);
@@ -175,6 +199,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
       }
 
       if (permission == LocationPermission.deniedForever) {
+        developer.log('_handleUseCurrentGps — permission denied forever', name: _tag);
         if (!mounted) return;
         _showSnackBar(
           'Location permissions are permanently denied.',
@@ -190,6 +215,12 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
         ),
       );
 
+      developer.log(
+        '_handleUseCurrentGps — position captured: '
+        'lat=${position.latitude}, lng=${position.longitude}',
+        name: _tag,
+      );
+
       if (!mounted) return;
       setState(() {
         _selectedLocation = LatLng(position.latitude, position.longitude);
@@ -197,6 +228,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
       });
       _showSnackBar('Location captured successfully!');
     } catch (e) {
+      developer.log('_handleUseCurrentGps — error: $e', name: _tag);
       if (!mounted) return;
       setState(() => _isFetchingGps = false);
       _showSnackBar('GPS error: $e', isError: true);
@@ -342,6 +374,8 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
                       selectedLocation: _selectedLocation,
                       onUseCurrentGps: _handleUseCurrentGps,
                       isFetchingGps: _isFetchingGps,
+                      onLocationChanged: _handleLocationChanged,
+                      locationDetailController: _locationDetailController,
                     ),
                     const SizedBox(height: 16),
                     AttachmentsSection(
