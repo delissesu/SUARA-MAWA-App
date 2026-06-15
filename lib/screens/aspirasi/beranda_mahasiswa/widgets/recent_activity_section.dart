@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/components/activity_card.dart';
+import 'package:suara_mawa/screens/aspirasi/detail_aspirasi/detail_aspirasi_screen.dart';
 import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
+import 'package:suara_mawa/utils/page_transitions.dart';
 
 class RecentActivitySection extends StatelessWidget {
   final VoidCallback? onViewAll;
@@ -23,7 +25,7 @@ class RecentActivitySection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Recent Activity',
+              'Aktivitas Terbaru',
               style: TextStyle(
                 fontFamily: 'PublicSans',
                 fontWeight: FontWeight.w700,
@@ -39,7 +41,7 @@ class RecentActivitySection extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: const Text(
-                'View All',
+                'Lihat Semua',
                 style: TextStyle(
                   fontFamily: 'PublicSans',
                   fontWeight: FontWeight.w500,
@@ -71,7 +73,7 @@ class RecentActivitySection extends StatelessWidget {
                 Icon(Icons.inbox_outlined, size: 40, color: Colors.grey.shade400),
                 const SizedBox(height: 8),
                 Text(
-                  'No recent activity',
+                  'Belum ada aktivitas terbaru',
                   style: TextStyle(
                     fontFamily: 'PublicSans',
                     fontSize: 14,
@@ -83,13 +85,16 @@ class RecentActivitySection extends StatelessWidget {
           )
         else
           ...recentItems.asMap().entries.map((entry) {
+            final index = entry.key;
             final item = entry.value;
             final statusLabel = _formatStatus(item.latestStatus);
             final statusColors = _statusColors(item.latestStatus);
 
             return Padding(
-              padding: EdgeInsets.only(bottom: entry.key < recentItems.length - 1 ? 12 : 0),
+              padding: EdgeInsets.only(bottom: index < recentItems.length - 1 ? 12 : 0),
               child: ActivityCard(
+                index: index,
+                reportId: item.id,
                 iconBackgroundColor: statusColors.$3,
                 icon: _categoryIcon(item.categoriesName),
                 iconColor: statusColors.$2,
@@ -100,6 +105,13 @@ class RecentActivitySection extends StatelessWidget {
                 statusColor: statusColors.$1,
                 statusBgColor: statusColors.$3,
                 statusIcon: _statusIcon(item.latestStatus),
+                onTap: () {
+                  Navigator.of(context).push(
+                    slidePageRoute(
+                      DetailAspirasiScreen(reportId: item.id),
+                    ),
+                  );
+                },
               ),
             );
           }),
@@ -109,12 +121,12 @@ class RecentActivitySection extends StatelessWidget {
 
   String _formatStatus(String? status) {
     return switch (status?.toLowerCase()) {
-      'pending' => 'Pending Review',
-      'in_progress' => 'In Progress',
-      'resolved' => 'Resolved',
-      'revision' => 'Revision',
-      'rejected' => 'Rejected',
-      _ => 'Pending Review',
+      'pending' => 'Menunggu Verifikasi',
+      'in_progress' => 'Sedang Diproses',
+      'resolved' => 'Selesai',
+      'revision' => 'Revisi',
+      'rejected' => 'Ditolak',
+      _ => 'Menunggu Verifikasi',
     };
   }
 

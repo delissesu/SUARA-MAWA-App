@@ -21,19 +21,19 @@ class AttachmentsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SectionCard(
       icon: Icons.attach_file_rounded,
-      title: 'Attachments',
+      title: 'Lampiran',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AttachmentButton(
             icon: Icons.camera_alt_outlined,
-            label: 'Take Photo',
+            label: 'Ambil Foto',
             onPressed: onTakePhoto,
           ),
           const SizedBox(height: 10),
           AttachmentButton(
             icon: Icons.image_outlined,
-            label: 'Upload Gallery',
+            label: 'Unggah dari Galeri',
             onPressed: onUploadGallery,
           ),
           if (attachments.isNotEmpty) ...[
@@ -55,7 +55,7 @@ class AttachmentsSection extends StatelessWidget {
           ],
           const SizedBox(height: 10),
           Text(
-            'Supported formats: JPG, PNG. Max size: 5MB.',
+            'Format yang didukung: JPG, PNG. Ukuran maksimal: 5MB.',
             style: TextStyle(
               fontFamily: 'PublicSans',
               fontWeight: FontWeight.w400,

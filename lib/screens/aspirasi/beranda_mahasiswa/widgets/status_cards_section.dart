@@ -21,7 +21,7 @@ class StatusCardsSection extends StatelessWidget {
           children: [
             Expanded(
               child: StatusCard(
-                label: 'Pending',
+                label: 'Verifikasi',
                 count: pendingCount,
                 icon: Icons.assignment_late_outlined,
                 backgroundColor: const Color(0xFFEDEEF2),
@@ -32,7 +32,7 @@ class StatusCardsSection extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: StatusCard(
-                label: 'Processed',
+                label: 'Dalam Proses',
                 count: processedCount,
                 icon: Icons.sync_outlined,
                 backgroundColor: const Color(0xFFB2EBF2),
@@ -44,7 +44,7 @@ class StatusCardsSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         StatusCard(
-          label: 'Resolved',
+          label: 'Selesai',
           count: resolvedCount,
           icon: Icons.check_circle_outline,
           backgroundColor: const Color(0xFF1B4332),

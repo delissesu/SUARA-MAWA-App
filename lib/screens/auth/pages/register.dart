@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:suara_mawa/screens/aspirasi/aspirasi_main_screen.dart';
 import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
@@ -54,7 +55,9 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             if (mounted) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => DashboardPage()),
+                MaterialPageRoute(
+                  builder: (context) => const AspirasiMainScreen(),
+                ),
               );
             }
           }
@@ -107,7 +110,9 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             if (mounted) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => DashboardPage()),
+                MaterialPageRoute(
+                  builder: (context) => const AspirasiMainScreen(),
+                ),
               );
             }
           }

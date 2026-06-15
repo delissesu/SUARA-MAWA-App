@@ -37,7 +37,7 @@ class HistoryBottomNavBar extends StatelessWidget {
               ),
               _NavItem(
                 icon: Icons.history_rounded,
-                label: 'History',
+                label: 'Daftar Tugas',
                 isActive: currentIndex == 1,
                 onTap: () => onTabChanged?.call(1),
               ),

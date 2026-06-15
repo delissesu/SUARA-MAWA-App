@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:suara_mawa/screens/aspirasi/aspirasi_main_screen.dart';
+import 'package:suara_mawa/screens/auth/components/progress_indicator.dart';
 import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
 import 'package:suara_mawa/screens/auth/controller/onboarding.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
-import 'package:suara_mawa/screens/auth/components/progress_indicator.dart';
 
 class PhoneNumberVerification extends StatefulWidget {
   const PhoneNumberVerification({super.key});
@@ -164,7 +165,8 @@ class _PhoneNumberVerificationState extends State<PhoneNumberVerification> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DashboardPage(),
+                                builder: (context) =>
+                                    const AspirasiMainScreen(),
                               ),
                             );
                             setState(() {

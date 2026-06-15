@@ -41,21 +41,26 @@ class DetailStatusBadge extends StatelessWidget {
         color: _bgColor,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_icon, size: 13, color: _textColor),
-          const SizedBox(width: 6),
-          Text(
-            status.label,
-            style: TextStyle(
-              fontFamily: 'PublicSans',
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              color: _textColor,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_icon, size: 13, color: _textColor),
+            const SizedBox(width: 6),
+            Text(
+              status.label,
+              style: TextStyle(
+                fontFamily: 'PublicSans',
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: _textColor,
+                decoration: TextDecoration.none,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

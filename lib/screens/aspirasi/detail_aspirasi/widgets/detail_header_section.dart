@@ -58,8 +58,14 @@ class DetailHeaderSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        // Status badge
-        DetailStatusBadge(status: item.currentStatus),
+        // Status badge with Hero transition
+        Hero(
+          tag: 'status-badge-${item.reportId}',
+          child: Material(
+            color: Colors.transparent,
+            child: DetailStatusBadge(status: item.currentStatus),
+          ),
+        ),
       ],
     );
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class StatusCard extends StatelessWidget {
+class StatusCard extends StatefulWidget {
   final String label;
   final int count;
   final IconData icon;
@@ -21,15 +21,59 @@ class StatusCard extends StatelessWidget {
   });
 
   @override
+  State<StatusCard> createState() => _StatusCardState();
+}
+
+class _StatusCardState extends State<StatusCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<int> _countAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _countAnimation = IntTween(begin: 0, end: widget.count).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant StatusCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.count != widget.count) {
+      _countAnimation = IntTween(
+        begin: oldWidget.count,
+        end: widget.count,
+      ).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      );
+      _controller
+        ..reset()
+        ..forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: widget.backgroundColor,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: isWide ? _buildWideLayout() : _buildCompactLayout(),
+      child: widget.isWide ? _buildWideLayout() : _buildCompactLayout(),
     );
   }
 
@@ -40,26 +84,31 @@ class StatusCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: iconColor, size: 22),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontFamily: 'PublicSans',
-                fontWeight: FontWeight.w800,
-                fontSize: 28,
-                color: textColor,
-              ),
+            Icon(widget.icon, color: widget.iconColor, size: 22),
+            AnimatedBuilder(
+              animation: _countAnimation,
+              builder: (context, child) {
+                return Text(
+                  '${_countAnimation.value}',
+                  style: TextStyle(
+                    fontFamily: 'PublicSans',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    color: widget.textColor,
+                  ),
+                );
+              },
             ),
           ],
         ),
         const SizedBox(height: 8),
         Text(
-          label,
+          widget.label,
           style: TextStyle(
             fontFamily: 'PublicSans',
             fontWeight: FontWeight.w500,
             fontSize: 13,
-            color: textColor,
+            color: widget.textColor,
           ),
         ),
       ],
@@ -74,27 +123,32 @@ class StatusCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: iconColor, size: 22),
+            Icon(widget.icon, color: widget.iconColor, size: 22),
             const SizedBox(height: 8),
             Text(
-              label,
+              widget.label,
               style: TextStyle(
                 fontFamily: 'PublicSans',
                 fontWeight: FontWeight.w500,
                 fontSize: 13,
-                color: textColor,
+                color: widget.textColor,
               ),
             ),
           ],
         ),
-        Text(
-          '$count',
-          style: TextStyle(
-            fontFamily: 'PublicSans',
-            fontWeight: FontWeight.w800,
-            fontSize: 32,
-            color: textColor,
-          ),
+        AnimatedBuilder(
+          animation: _countAnimation,
+          builder: (context, child) {
+            return Text(
+              '${_countAnimation.value}',
+              style: TextStyle(
+                fontFamily: 'PublicSans',
+                fontWeight: FontWeight.w800,
+                fontSize: 32,
+                color: widget.textColor,
+              ),
+            );
+          },
         ),
       ],
     );

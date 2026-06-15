@@ -11,10 +11,10 @@ enum DetailStatus {
 
   String get label {
     return switch (this) {
-      DetailStatus.submitted => 'Submitted',
-      DetailStatus.underReview => 'Under Review',
-      DetailStatus.inProgress => 'In Progress',
-      DetailStatus.resolved => 'Resolved',
+      DetailStatus.submitted => 'Terkirim',
+      DetailStatus.underReview => 'Verifikasi',
+      DetailStatus.inProgress => 'Sedang Diproses',
+      DetailStatus.resolved => 'Selesai',
     };
   }
 
@@ -88,6 +88,7 @@ class OfficialResponse {
 }
 
 class DetailAspirasiModel {
+  final int reportId;
   final String aspirationId;
   final String category;
   final String dateLabel;
@@ -103,6 +104,7 @@ class DetailAspirasiModel {
   final List<int> evidenceIds;
 
   const DetailAspirasiModel({
+    required this.reportId,
     required this.aspirationId,
     required this.category,
     required this.dateLabel,

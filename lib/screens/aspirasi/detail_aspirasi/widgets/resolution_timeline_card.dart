@@ -12,7 +12,7 @@ class ResolutionTimelineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InfoSectionCard(
       icon: Icons.history_toggle_off_rounded,
-      title: 'Resolution Timeline',
+      title: 'Linimasa Penyelesaian',
       child: Column(
         children: List.generate(timeline.length, (index) {
           return TimelineStepItem(

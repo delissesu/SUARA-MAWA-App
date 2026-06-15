@@ -41,7 +41,7 @@ class _ReportedLocationCardState extends State<ReportedLocationCard> {
   Widget build(BuildContext context) {
     return InfoSectionCard(
       icon: Icons.location_on_outlined,
-      title: 'Reported Location',
+      title: 'Lokasi Laporan',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
