@@ -3,7 +3,8 @@ import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:suara_mawa/screens/aspirasi/beranda_mahasiswa/beranda_mahasiswa_screen.dart';
-import 'package:suara_mawa/screens/auth/controller/auth_service.dart' hide NavigationService;
+import 'package:suara_mawa/screens/auth/controller/auth_service.dart'
+    hide NavigationService;
 import 'package:suara_mawa/screens/auth/index.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
@@ -23,12 +24,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void setupFirebaseListeners() {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     if (message.notification != null) {
-      print("SHOW LOCAL");
       await NotificationService.showNotification(
+        id: int.tryParse(message.data['id']) ?? 0,
         title: message.notification!.title ?? 'Notifikasi',
         body: message.notification!.body ?? '',
       );
-      print("success");
     }
   });
 }

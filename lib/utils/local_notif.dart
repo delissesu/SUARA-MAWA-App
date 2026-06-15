@@ -3,48 +3,75 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 class NotificationService {
   NotificationService._();
 
-  static const String _channelId = 'report_channel_v4';
-  static const String _channelName = 'Report Notifications';
-  static const String _channelDescription =
-      'Notification for reports';
+  static AndroidNotificationChannel createChannel({
+    required String id,
+    required String name,
+    required Importance importance,
+    required String description,
+    required String soundName,
+  }) {
+    return AndroidNotificationChannel(
+      id,
+      name,
+      description: description,
+      importance: importance,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound(soundName),
+    );
+  }
 
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  static const AndroidNotificationChannel _channel =
-      AndroidNotificationChannel(
-    _channelId,
-    _channelName,
-    description: _channelDescription,
+  static const String _channelId = 'report_urgent';
+  static const String _channelName = 'Importance Reports';
+  static const String _channelDescription = 'Notification for reports that has max importance';
+  static final AndroidNotificationChannel _channel = createChannel(
+    id: _channelId,
+    name: _channelName,
     importance: Importance.max,
-    playSound: true,
-    sound: RawResourceAndroidNotificationSound('notif_imut'),
+    description: _channelDescription,
+    soundName: 'notif',
   );
 
-
+  static final AndroidNotificationChannel _channel2 = createChannel(
+    id: 'report_general',
+    name: 'General Reports',
+    importance: Importance.defaultImportance,
+    description: 'Notification for reports that has moderate importance',
+    soundName: 'notif',
+  );
 
   static Future<void> initialize() async {
     const initializationSettings = InitializationSettings(
-      android: AndroidInitializationSettings(
-        '@mipmap/launcher_icon',
-      ),
+      android: AndroidInitializationSettings('@mipmap/launcher_icon'),
     );
 
     await _plugin.initialize(settings: initializationSettings);
 
     await _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(_channel);
+      await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(_channel2);
   }
 
   static Future<void> showNotification({
+    required int id,
     required String title,
     required String body,
   }) async {
     const androidDetails = AndroidNotificationDetails(
       _channelId,
       _channelName,
+      // Note for Android 8 (API<26) we didn't need to specify others attribut.
+      // Because its already defined by the channel, so we just need to use channelName.
+      // Also for 26+ once channel defined, it cant be changed so it wont overwrite it
       channelDescription: _channelDescription,
       importance: Importance.max,
       priority: Priority.high,
@@ -52,12 +79,10 @@ class NotificationService {
       sound: RawResourceAndroidNotificationSound('notif_imut'),
     );
 
-    const notificationDetails = NotificationDetails(
-      android: androidDetails,
-    );
+    const notificationDetails = NotificationDetails(android: androidDetails);
 
     await _plugin.show(
-      id: 1,
+      id: id, // Use the same id will overwrite the notification
       title: title,
       body: body,
       notificationDetails: notificationDetails,

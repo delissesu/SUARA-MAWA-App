@@ -85,6 +85,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         email,
         password,
       );
+      print("CHeckpoint 1");
       if (isSucces) {
         if (content != null && mounted) {
           print("Token: $content");
@@ -178,7 +179,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                         Text(
                           errorMsg!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                          ),
                         ),
                       TextFormField(
                         style: textStyle,
@@ -189,7 +193,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                           labelText: 'Email',
                           errorStyle: errorStyle,
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black, width: 2.0),
+                            borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 2.0,
+                            ),
                           ),
                         ),
                         controller: emailController,
@@ -212,7 +219,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                           labelText: 'Password',
                           errorStyle: errorStyle,
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black, width: 2.0),
+                            borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 2.0,
+                            ),
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -255,8 +265,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       ),
                       ElevatedButton(
                         onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            setState(() => _isLoading = true);
+                          if (true) {
+                            print("running");
+                            // _formKey.currentState!.validate()) {
 
                             final res = await loginEmail(
                               emailController.text,
@@ -276,7 +287,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                                 }
                               }
                             }
-                            setState(() => _isLoading = false);
+                            print("runned should not loading");
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -299,7 +310,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       const Row(
                         children: <Widget>[
                           Expanded(
-                            child: Divider(thickness: 1, color: AppColors.inactive),
+                            child: Divider(
+                              thickness: 1,
+                              color: AppColors.inactive,
+                            ),
                           ),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10),
@@ -312,7 +326,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                             ),
                           ),
                           Expanded(
-                            child: Divider(thickness: 1, color: AppColors.inactive),
+                            child: Divider(
+                              thickness: 1,
+                              color: AppColors.inactive,
+                            ),
                           ),
                         ],
                       ),
@@ -320,7 +337,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                         onPressed: () async {
                           final res = await loginOauth();
                           if (res && mounted) {
-                            var (result, kode) = await _authService.checkAuth(ref);
+                            var (result, kode) = await _authService.checkAuth(
+                              ref,
+                            );
                             if (!result) {
                               if (mounted) {
                                 _authService.HandleError(kode);
@@ -355,7 +374,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
-                          style: const TextStyle(color: Colors.black, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                          ),
                           children: [
                             const TextSpan(text: 'Lupa password? '),
                             TextSpan(
@@ -382,7 +404,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
-                          style: const TextStyle(color: Colors.black, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                          ),
                           children: [
                             const TextSpan(text: 'Belum punya akun? '),
                             TextSpan(

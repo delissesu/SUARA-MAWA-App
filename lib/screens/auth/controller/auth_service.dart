@@ -17,9 +17,8 @@ class AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response != null && err.response!.data != null) {
       AuthService().HandleError(err.response!.data["code"]);
-    } else {
-      return handler.next(err);
     }
+    return handler.next(err);
   }
 }
 
