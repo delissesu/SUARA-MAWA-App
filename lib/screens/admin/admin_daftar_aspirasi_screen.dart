@@ -5,14 +5,15 @@ import 'package:suara_mawa/screens/penindak/task_detail_screen.dart';
 import 'package:suara_mawa/screens/penindak/services/report_service.dart';
 import 'package:suara_mawa/screens/penindak/models/report.dart';
 
-class TaskListScreen extends StatefulWidget {
-  const TaskListScreen({super.key});
+class AdminDaftarAspirasiScreen extends StatefulWidget {
+  const AdminDaftarAspirasiScreen({super.key});
 
   @override
-  State<TaskListScreen> createState() => _TaskListScreenState();
+  State<AdminDaftarAspirasiScreen> createState() =>
+      _AdminDaftarAspirasiScreenState();
 }
 
-class _TaskListScreenState extends State<TaskListScreen> {
+class _AdminDaftarAspirasiScreenState extends State<AdminDaftarAspirasiScreen> {
   int _selectedTabIndex = 0;
 
   final ReportService _reportService = ReportService();
@@ -31,13 +32,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
       'title': 'Perlu Dikerjakan',
       'icon': Icons.list_alt,
       'status': 'in_progress',
-      'buttonLabel': 'Tindak',
+      'buttonLabel': 'Lihat Detail',
     },
     {
       'title': 'Perlu Revisi',
       'icon': Icons.autorenew,
       'status': 'revision',
-      'buttonLabel': 'Lanjut Revisi',
+      'buttonLabel': 'Lihat Detail',
     },
     {
       'title': 'Selesai',
@@ -60,31 +61,32 @@ class _TaskListScreenState extends State<TaskListScreen> {
     });
 
     try {
-      // 1. Fetch departmentId from /user/me
-      final departmentId = await _reportService.getUserDepartmentId();
-      if (departmentId == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Gagal mendapatkan data departemen pengguna.';
-        });
-        return;
-      }
-
-      // 2. Fetch reports for all statuses in parallel
+      // Fetch reports for both departmentId 1 and 2, all statuses
       final results = await Future.wait([
-        _reportService.fetchReports(departmentId: departmentId, status: 'pending'),
-        _reportService.fetchReports(departmentId: departmentId, status: 'in_progress'),
-        _reportService.fetchReports(departmentId: departmentId, status: 'revision'),
-        _reportService.fetchReports(departmentId: departmentId, status: 'resolved'),
+        _reportService.fetchReports(departmentId: 1, status: 'pending'),
+        _reportService.fetchReports(departmentId: 1, status: 'in_progress'),
+        _reportService.fetchReports(departmentId: 1, status: 'revision'),
+        _reportService.fetchReports(departmentId: 1, status: 'resolved'),
+        _reportService.fetchReports(departmentId: 2, status: 'pending'),
+        _reportService.fetchReports(departmentId: 2, status: 'in_progress'),
+        _reportService.fetchReports(departmentId: 2, status: 'revision'),
+        _reportService.fetchReports(departmentId: 2, status: 'resolved'),
       ]);
 
-      final inProgress = [...results[0], ...results[1]];
+      // Merge dept 1 + dept 2 per status
+      final inProgress = [...results[0], ...results[1], ...results[4], ...results[5]];
+      final revision = [...results[2], ...results[6]];
+      final resolved = [...results[3], ...results[7]];
+
+      // Sort each by createdAt descending
       inProgress.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      revision.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      resolved.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       setState(() {
         _inProgressReports = inProgress;
-        _revisionReports = results[2];
-        _resolvedReports = results[3];
+        _revisionReports = revision;
+        _resolvedReports = resolved;
         _isLoading = false;
       });
     } catch (e) {
@@ -199,12 +201,17 @@ class _TaskListScreenState extends State<TaskListScreen> {
               },
               borderRadius: BorderRadius.circular(24),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.grey.withOpacity(0.15),
+                  color: isSelected
+                      ? AppColors.primary
+                      : Colors.grey.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isSelected ? AppColors.primary : Colors.grey.withOpacity(0.3),
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.grey.withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -214,15 +221,19 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     Icon(
                       tab['icon'],
                       size: 20,
-                      color: isSelected ? AppColors.white : AppColors.inactive,
+                      color:
+                          isSelected ? AppColors.white : AppColors.inactive,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       displayText,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? AppColors.white : AppColors.inactive,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected
+                            ? AppColors.white
+                            : AppColors.inactive,
                       ),
                     ),
                   ],
@@ -297,7 +308,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
       );
     }
 
-    final buttonLabel = _tabMeta[_selectedTabIndex]['buttonLabel'] as String;
+    final buttonLabel =
+        _tabMeta[_selectedTabIndex]['buttonLabel'] as String;
 
     return Column(
       children: reports.map((report) {
@@ -311,13 +323,17 @@ class _TaskListScreenState extends State<TaskListScreen> {
           onActionPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TaskDetailScreen(reportId: report.id)),
+              MaterialPageRoute(
+                  builder: (context) =>
+                      TaskDetailScreen(reportId: report.id)),
             );
           },
           onCardTapped: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TaskDetailScreen(reportId: report.id)),
+              MaterialPageRoute(
+                  builder: (context) =>
+                      TaskDetailScreen(reportId: report.id)),
             );
           },
         );
@@ -350,19 +366,20 @@ class _TaskListScreenState extends State<TaskListScreen> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   child: thumbnailPath != null
                       ? _buildAuthenticatedImage(thumbnailPath)
                       : Container(
                           height: 180,
                           width: double.infinity,
                           color: Colors.grey[300],
-                          child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                          child: const Icon(Icons.image_not_supported,
+                              size: 50, color: Colors.grey),
                         ),
                 ),
               ],
             ),
-
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -378,10 +395,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-
                   Row(
                     children: [
-                      Icon(Icons.category, size: 18, color: AppColors.inactive),
+                      Icon(Icons.category,
+                          size: 18, color: AppColors.inactive),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -395,7 +412,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     ],
                   ),
                   const SizedBox(height: 14),
-
                   Text(
                     description,
                     maxLines: 2,
@@ -407,7 +423,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -429,7 +444,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 14),
                         ),
                         child: Text(
                           buttonLabel,
@@ -446,7 +462,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
             ),
           ],
         ),
-      )
+      ),
     );
   }
 
@@ -481,7 +497,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
             errorBuilder: (context, error, stackTrace) => Container(
               height: 180,
               color: Colors.grey[300],
-              child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+              child: const Icon(Icons.image_not_supported,
+                  size: 50, color: Colors.grey),
             ),
           );
         }
@@ -490,7 +507,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
           height: 180,
           width: double.infinity,
           color: Colors.grey[300],
-          child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+          child: const Icon(Icons.image_not_supported,
+              size: 50, color: Colors.grey),
         );
       },
     );

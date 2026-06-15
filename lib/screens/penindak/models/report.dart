@@ -31,7 +31,7 @@ class Report {
 
   factory Report.fromJson(Map<String, dynamic> json) {
     return Report(
-      id: json['id'],
+      id: json['id'] ?? 0,
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       likes: json['likes'] ?? 0,
@@ -40,7 +40,7 @@ class Report {
       categoriesName: json['categoriesName'] ?? '',
       latestStatus: json['latestStatus'] ?? '',
       thumbnail: json['thumbnail'],
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
       locationLat: (json['locationLat'] as num?)?.toDouble(),
       locationLong: (json['locationLong'] as num?)?.toDouble(),
       location: json['location'] as String?,

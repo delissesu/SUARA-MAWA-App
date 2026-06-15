@@ -70,6 +70,23 @@ class ReportService {
     }
   }
 
+  /// Fetch all reports (admin) via GET /report/all
+  Future<List<Report>> fetchAllReports() async {
+    try {
+      final token = await _getToken();
+      final response = await _dio.get(
+        '/report/all',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final data = response.data;
+      final List<dynamic> items = data['data'] ?? [];
+      return items.map((json) => Report.fromJson(json)).toList();
+    } on DioException catch (e) {
+      print('Error fetching all reports: ${e.message}');
+      return [];
+    }
+  }
+
   /// Fetch the full detail of a single report via POST /report/detail
   Future<Map<String, dynamic>?> fetchReportDetail(int reportId) async {
     try {

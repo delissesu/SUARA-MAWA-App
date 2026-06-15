@@ -51,16 +51,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       final results = await Future.wait([
+        _reportService.fetchReports(departmentId: departmentId, status: 'pending'),
         _reportService.fetchReports(departmentId: departmentId, status: 'in_progress'),
         _reportService.fetchReports(departmentId: departmentId, status: 'revision'),
         _reportService.fetchReports(departmentId: departmentId, status: 'resolved'),
       ]);
 
-      final inProgress = results[0];
-      final revision = results[1];
-      final resolved = results[2];
+      final pending = results[0];
+      final inProgress = results[1];
+      final revision = results[2];
+      final resolved = results[3];
 
-      final allReports = [...inProgress, ...revision, ...resolved];
+      final allReports = [...pending, ...inProgress, ...revision, ...resolved];
       allReports.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       // Fetch details for all reports to get location
@@ -76,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }));
 
       setState(() {
-        _perluDikerjakan = inProgress.length;
+        _perluDikerjakan = pending.length + inProgress.length;
         _perluRevisi = revision.length;
         _selesai = resolved.length;
         _totalAspirasi = _perluDikerjakan + _perluRevisi + _selesai;
