@@ -350,12 +350,15 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>?> getMahasiswaDetail() async {
+  Future<Map<String, dynamic>?> getDetail({bool isMahasiswa = true}) async {
     try {
       final token = await this.getToken();
       print('sending, token: $token');
+      final url = isMahasiswa
+          ? '/user/mahasiswa-detail'
+          : '/user/penindak-detail';
       final response = await _dio.get(
-        '/user/mahasiswa-detail',
+        url,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       print(response);
@@ -424,6 +427,20 @@ class AuthService {
     }
   }
 
+  Future<bool> updateProfile({String? nim, String? nik, String? phoneNumber}) async {
+    try {
+      final token = await this.getToken();
+      await _dio.post(
+        '/user/update',
+        data: {'nim': nim, 'nik': nik, 'phoneNumber': phoneNumber},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   void showError(String message) {
     scaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -483,7 +500,7 @@ class AuthService {
 
       default:
         if (code.isNotEmpty) {
-          showError("Error: $code");
+          // showError("Error: $code");
         }
     }
   }

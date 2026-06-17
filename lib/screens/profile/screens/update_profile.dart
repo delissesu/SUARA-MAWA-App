@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:suara_mawa/screens/auth/controller/auth_service.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
 import 'package:suara_mawa/utils/photo_galery.dart';
 import 'package:suara_mawa/utils/user_controller.dart';
@@ -19,12 +20,14 @@ class UpdateProfilePage extends ConsumerStatefulWidget {
 
 class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
   File? selectedImage;
+  final _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
   final idPhoneRegex = RegExp(r'^(\+62|62|0)8[1-9][0-9]{7,11}$');
   final textStyle = const TextStyle(color: Colors.black, fontSize: 16);
   final errorStyle = const TextStyle(color: Colors.red, fontSize: 16);
   late final TextEditingController nomorHPController;
   late final UserModel userModel;
+  late final TextEditingController identityController;
   bool _isLoading = false;
   Future<void> _pickImage() async {
     File? image = await pickImage(context);
@@ -40,13 +43,73 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
     super.initState();
     userModel = ref.read(userControllerProvider);
     final initialValue = userModel.user?.phoneNumber ?? '';
+    final identityValue = switch (userModel.user?.userRole?.name) {
+      "MAHASISWA" => userModel.mahasiswaDetail?.nim,
+      "PENINDAK" => userModel.penindakDetail?.nik,
+      "ADMIN" => userModel.adminDetail?.nik,
+      _ => "",
+    };
     nomorHPController = TextEditingController(text: initialValue);
+    identityController = TextEditingController(text: identityValue);
   }
 
   @override
   void dispose() {
     nomorHPController.dispose();
+    identityController.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateProfile() async {
+    bool isMahasiswa = userModel.mahasiswaDetail != null;
+    bool noChange = false;
+    if (nomorHPController.text == userModel.user?.phoneNumber) {
+      if (isMahasiswa) {
+        if (identityController.text == userModel.mahasiswaDetail!.nim) {
+          noChange = true;
+        }
+      } else {
+        if (userModel.penindakDetail != null) {
+          if (identityController.text == userModel.penindakDetail!.nik) {
+            noChange = true;
+          }
+        } else {
+          if (identityController.text == userModel.adminDetail!.nik) {
+            noChange = true;
+          }
+        }
+      }
+    }
+    if (noChange) {
+      SnackBar(
+        content: Text("Tidak ada data yang diperbaharui"),
+        backgroundColor: Colors.black,
+      );
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+    });
+    final res = await _authService.updateProfile(
+      nim: isMahasiswa ? identityController.text : null,
+      nik: !isMahasiswa ? identityController.text : null,
+      phoneNumber: nomorHPController.text != userModel.user?.phoneNumber
+          ? nomorHPController.text
+          : null,
+    );
+    setState(() {
+      _isLoading = false;
+    });
+    if (res && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Profile Berhasil Diperbarui"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      _authService.showError("Gagal Update Profile");
+    }
   }
 
   @override
@@ -145,29 +208,40 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
                           return null;
                         },
                       ),
+                      const Text(
+                        "Mengganti nomor telepon akan memerlukan verifikasi dengan OTP",
+                      ),
                       const SizedBox(height: 16),
                       if (userModel.mahasiswaDetail != null)
-                        MahasiswaDetailForm(),
+                        MahasiswaDetailForm(
+                          identityController: identityController,
+                        ),
                       if (userModel.penindakDetail != null)
-                        PenindakDetailForm(),
-                      if (userModel.adminDetail != null) AdminDetailForm(),
-                      
+                        PenindakDetailForm(
+                          identityController: identityController,
+                        ),
+                      if (userModel.adminDetail != null)
+                        AdminDetailForm(identityController: identityController),
+
                       const SizedBox(height: 20),
-                      
+
                       SizedBox(
-                        width: double.infinity, // Expands to full available width
+                        width:
+                            double.infinity, // Expands to full available width
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               setState(() => _isLoading = true);
-                              
+                              await _updateProfile();
                               setState(() => _isLoading = false);
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,     // Background color
-                            foregroundColor: Colors.white,    // Text and icon color
+                            backgroundColor:
+                                AppColors.primary, // Background color
+                            foregroundColor:
+                                Colors.white, // Text and icon color
                           ),
                           child: const Text("Perbarui", style: TextStyle()),
                         ),
@@ -177,6 +251,12 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
                 ),
               ),
             ),
+            if (_isLoading)
+              const Opacity(
+                opacity: 0.6,
+                child: ModalBarrier(dismissible: false, color: Colors.black),
+              ),
+            if (_isLoading) const Center(child: CircularProgressIndicator()),
           ],
         ),
       ),
@@ -215,7 +295,8 @@ class IdentityTextField extends StatelessWidget {
 }
 
 class MahasiswaDetailForm extends ConsumerStatefulWidget {
-  const MahasiswaDetailForm({super.key});
+  final TextEditingController identityController;
+  const MahasiswaDetailForm({super.key, required this.identityController});
 
   @override
   ConsumerState<MahasiswaDetailForm> createState() {
@@ -224,17 +305,11 @@ class MahasiswaDetailForm extends ConsumerStatefulWidget {
 }
 
 class _MahasiswaDetailFormState extends ConsumerState<MahasiswaDetailForm> {
-  late final nimController;
   final textStyle = const TextStyle(color: Colors.black, fontSize: 16);
 
   @override
   void initState() {
     super.initState();
-    nimController = TextEditingController(
-      text: ref.read(
-        userControllerProvider.select((m) => m.mahasiswaDetail?.nim),
-      ),
-    );
     // nipController = TextEditingController(ref.read(userControllerProvider.select((m)=>m.penindakDetail?.nip)));
   }
 
@@ -253,7 +328,7 @@ class _MahasiswaDetailFormState extends ConsumerState<MahasiswaDetailForm> {
           borderSide: BorderSide(color: Colors.black, width: 2.0),
         ),
       ),
-      controller: nimController,
+      controller: widget.identityController,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'Masukkan password';
@@ -265,30 +340,24 @@ class _MahasiswaDetailFormState extends ConsumerState<MahasiswaDetailForm> {
 }
 
 class PenindakDetailForm extends ConsumerStatefulWidget {
-  const PenindakDetailForm({super.key});
+  final TextEditingController identityController;
+  const PenindakDetailForm({super.key, required this.identityController});
 
   @override
   ConsumerState<PenindakDetailForm> createState() => _PenindakDetailFormState();
 }
 
 class _PenindakDetailFormState extends ConsumerState<PenindakDetailForm> {
-  late final nikController;
   // late final nipController;
 
   @override
   void initState() {
     super.initState();
-    nikController = TextEditingController(
-      text: ref.read(
-        userControllerProvider.select((m) => m.penindakDetail?.nik),
-      ),
-    );
     // nipController = TextEditingController(ref.read(userControllerProvider.select((m)=>m.penindakDetail?.nip)));
   }
 
   @override
   void dispose() {
-    nikController.dispose();
     // nipController.dispose();
     super.dispose();
   }
@@ -297,7 +366,7 @@ class _PenindakDetailFormState extends ConsumerState<PenindakDetailForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        IdentityTextField(controller: nikController, label: 'NIK'),
+        IdentityTextField(controller: widget.identityController, label: 'NIK'),
         // const SizedBox(height: 16),
         // IdentityTextField(controller: nipController, label: 'NIP'),
       ],
@@ -306,27 +375,23 @@ class _PenindakDetailFormState extends ConsumerState<PenindakDetailForm> {
 }
 
 class AdminDetailForm extends ConsumerStatefulWidget {
-  const AdminDetailForm({super.key});
+  final TextEditingController identityController;
+  const AdminDetailForm({super.key, required this.identityController});
 
   @override
   ConsumerState<AdminDetailForm> createState() => _AdminDetailFormState();
 }
 
 class _AdminDetailFormState extends ConsumerState<AdminDetailForm> {
-  late final nikController;
   // final nipController = TextEditingController();
   @override
   void initState() {
     super.initState();
-    nikController = TextEditingController(
-      text: ref.read(userControllerProvider.select((m) => m.adminDetail?.nik)),
-    );
     // nipController = TextEditingController(ref.read(userControllerProvider.select((m)=>m.penindakDetail?.nip)));
   }
 
   @override
   void dispose() {
-    nikController.dispose();
     // nipController.dispose();
     super.dispose();
   }
@@ -335,7 +400,7 @@ class _AdminDetailFormState extends ConsumerState<AdminDetailForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        IdentityTextField(controller: nikController, label: 'NIK'),
+        IdentityTextField(controller: widget.identityController, label: 'NIK'),
         // const SizedBox(height: 16),
         // IdentityTextField(controller: nipController, label: 'NIP'),
       ],
