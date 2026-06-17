@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:suara_mawa/screens/admin/admin_account_management.dart';
 import 'package:suara_mawa/screens/admin/admin_daftar_aspirasi_screen.dart';
+import 'package:suara_mawa/screens/public_aspirations/screens/public_aspirations_screen.dart';
 import 'package:suara_mawa/screens/penindak/services/report_service.dart';
 import 'package:suara_mawa/screens/penindak/models/report.dart';
 import 'package:suara_mawa/screens/penindak/task_detail_screen.dart';
@@ -96,6 +97,7 @@ class DashboardAdmin extends StatelessWidget {
       screens: [
         _AdminDashboardBody(),
         AdminDaftarAspirasiScreen(),
+        PublicAspirationsScreen(),
         AdminAccountManagement(),
         ProfileScreen(),
       ],
@@ -109,6 +111,11 @@ class DashboardAdmin extends StatelessWidget {
           icon: Icon(Icons.list_alt_outlined),
           selectedIcon: Icon(Icons.list_alt),
           label: 'Daftar Aspirasi',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.public_outlined),
+          selectedIcon: Icon(Icons.public),
+          label: 'Aspirasi Publik',
         ),
         NavigationDestination(
           icon: Icon(Icons.manage_accounts_outlined),
