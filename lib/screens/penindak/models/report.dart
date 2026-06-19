@@ -2,7 +2,7 @@ class Report {
   final int id;
   final String title;
   final String description;
-  final int likes;
+  final String likes;
   final String authorName;
   final String departmentName;
   final String categoriesName;
@@ -34,7 +34,7 @@ class Report {
       id: json['id'] ?? 0,
       title: json['title'] ?? '',
       description: json['description'] ?? '',
-      likes: json['likes'] ?? 0,
+      likes: json['likes'] ?? '0',
       authorName: json['authorName'] ?? '',
       departmentName: json['departmentName'] ?? '',
       categoriesName: json['categoriesName'] ?? '',
@@ -51,7 +51,7 @@ class Report {
     int? id,
     String? title,
     String? description,
-    int? likes,
+    String? likes,
     String? authorName,
     String? departmentName,
     String? categoriesName,

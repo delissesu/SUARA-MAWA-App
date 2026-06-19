@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:suara_mawa/screens/aspirasi/models/report_model.dart';
 
 // Re-export or mirror AspirasiStatus from daftar_aspirasi if shared
 // For independence, we define status here too. In production, extract
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 enum DetailStatus {
   submitted,
   underReview,
+  revision,
   inProgress,
   resolved;
 
@@ -13,6 +15,7 @@ enum DetailStatus {
     return switch (this) {
       DetailStatus.submitted => 'Terkirim',
       DetailStatus.underReview => 'Verifikasi',
+      DetailStatus.revision => 'Perlu Revisi',
       DetailStatus.inProgress => 'Sedang Diproses',
       DetailStatus.resolved => 'Selesai',
     };
@@ -22,7 +25,7 @@ enum DetailStatus {
   static DetailStatus fromApiStatus(String apiStatus) {
     return switch (apiStatus.toLowerCase()) {
       'pending' => DetailStatus.submitted,
-      'revision' => DetailStatus.underReview,
+      'revision' => DetailStatus.revision,
       'in_progress' => DetailStatus.inProgress,
       'resolved' || 'rejected' => DetailStatus.resolved,
       _ => DetailStatus.submitted,
@@ -33,6 +36,7 @@ enum DetailStatus {
     return switch (this) {
       DetailStatus.submitted => const Color(0xFF1A2B5F),
       DetailStatus.underReview => const Color(0xFF1A2B5F),
+      DetailStatus.revision => const Color(0xFFE65100),
       DetailStatus.inProgress => const Color(0xFF1B4332),
       DetailStatus.resolved => const Color(0xFFEDEEF2),
     };
@@ -42,6 +46,7 @@ enum DetailStatus {
     return switch (this) {
       DetailStatus.submitted => Colors.white,
       DetailStatus.underReview => Colors.white,
+      DetailStatus.revision => Colors.white,
       DetailStatus.inProgress => const Color(0xFF52B788),
       DetailStatus.resolved => const Color(0xFFB0BEC5),
     };
@@ -51,6 +56,7 @@ enum DetailStatus {
     return switch (this) {
       DetailStatus.submitted => Icons.check_rounded,
       DetailStatus.underReview => Icons.check_rounded,
+      DetailStatus.revision => Icons.warning_amber_rounded,
       DetailStatus.inProgress => Icons.sync_rounded,
       DetailStatus.resolved => Icons.flag_outlined,
     };
@@ -78,12 +84,16 @@ class OfficialResponse {
   final String timeAgo;
   final String avatarLabel;
   final String message;
+  final String? avatarUrl;
+  final List<FeedbackAttachment> attachments;
 
   const OfficialResponse({
     required this.responderName,
     required this.timeAgo,
     required this.avatarLabel,
     required this.message,
+    this.avatarUrl,
+    this.attachments = const [],
   });
 }
 
@@ -94,6 +104,9 @@ class DetailAspirasiModel {
   final String dateLabel;
   final String title;
   final DetailStatus currentStatus;
+  /// Raw backend status string (e.g. 'pending', 'revision', 'in_progress').
+  /// Used for status-dependent UI branching without enum mapping ambiguity.
+  final String rawStatus;
   final String? attachmentImagePath; // null = use placeholder
   final String detailDescription;
   final String locationAddress;
@@ -110,6 +123,7 @@ class DetailAspirasiModel {
     required this.dateLabel,
     required this.title,
     required this.currentStatus,
+    required this.rawStatus,
     this.attachmentImagePath,
     required this.detailDescription,
     required this.locationAddress,

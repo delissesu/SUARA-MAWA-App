@@ -32,7 +32,7 @@ class ReportListItem {
   final String title;
   final String description;
   final String? location;
-  final int likes;
+  final String? likes;
   final String authorName;
   final String departmentName;
   final String categoriesName;
@@ -47,7 +47,7 @@ class ReportListItem {
     required this.title,
     required this.description,
     this.location,
-    required this.likes,
+    this.likes,
     required this.authorName,
     required this.departmentName,
     required this.categoriesName,
@@ -62,7 +62,7 @@ class ReportListItem {
       title: json['title'] as String,
       description: json['description'] as String,
       location: json['location'] as String?,
-      likes: (json['likes'] as num?)?.toInt() ?? 0,
+      likes: json['likes'] ?? "0",
       authorName: json['authorName'] as String? ?? '',
       departmentName: json['departmentName'] as String? ?? '',
       categoriesName: json['categoriesName'] as String? ?? '',
@@ -210,13 +210,17 @@ class ReportStatusItem {
 class ReportStatusAuthor {
   final String id;
   final String name;
+  final String? urlFotoProfil;
 
-  const ReportStatusAuthor({required this.id, required this.name});
+  const ReportStatusAuthor({required this.id, required this.name, this.urlFotoProfil});
 
   factory ReportStatusAuthor.fromJson(Map<String, dynamic> json) {
     return ReportStatusAuthor(
       id: json['id'].toString(),
       name: json['name'] as String? ?? '',
+      urlFotoProfil: json['url_foto_profil'] as String? ?? (json['photoProfileId'] != null
+          ? '/users/${Uri.encodeComponent(json['name'] as String)}/profile/photo'
+          : null),
     );
   }
 }
@@ -230,7 +234,7 @@ class ReportDetail {
   final double locationLong;
   final String? location;
   final bool isPublic;
-  final int likes;
+  final String? likes;
   final ReportAuthor author;
   final ReportDetailDepartment department;
   final ReportDetailCategory category;
@@ -246,7 +250,7 @@ class ReportDetail {
     required this.locationLong,
     this.location,
     required this.isPublic,
-    required this.likes,
+    this.likes,
     required this.author,
     required this.department,
     required this.category,
@@ -264,7 +268,7 @@ class ReportDetail {
       locationLong: (json['locationLong'] as num).toDouble(),
       location: json['location'] as String?,
       isPublic: json['isPublic'] as bool? ?? true,
-      likes: (json['likes'] as num?)?.toInt() ?? 0,
+      likes: json['likes'] ?? "0",
       author: ReportAuthor.fromJson(
           json['author'] as Map<String, dynamic>? ?? {}),
       department: ReportDetailDepartment.fromJson(

@@ -27,10 +27,13 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
   final textStyle = const TextStyle(color: Colors.black, fontSize: 16);
   final errorStyle = const TextStyle(color: Colors.red, fontSize: 16);
   late final TextEditingController nomorHPController;
+  late final TextEditingController? nimController;
+  late final TextEditingController? nikController;
   late final UserModel userModel;
   late final TextEditingController identityController;
   late final TextEditingController nameController;
   bool _isLoading = false;
+
   Future<void> _pickImage() async {
     File? image = await pickImage(context);
     if (image != null) {
@@ -488,23 +491,26 @@ class _MahasiswaDetailFormState extends ConsumerState<MahasiswaDetailForm> {
 
   @override
   Widget build(BuildContext context) {
+    const textStyle = TextStyle(color: Colors.black54, fontSize: 16);
     return TextFormField(
       style: textStyle,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         hintStyle: textStyle,
         hintText: 'NIM',
         labelStyle: textStyle,
-        labelText: 'NIM',
-        errorStyle: const TextStyle(color: Colors.red, fontSize: 16),
+        labelText: 'NIM (Tidak dapat diubah)',
+        errorStyle: TextStyle(color: Colors.red, fontSize: 16),
+        filled: true,
+        fillColor: Color(0xFFF0F2F5),
         border: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black, width: 2.0),
+          borderSide: BorderSide(color: Colors.black38, width: 2.0),
         ),
       ),
       controller: widget.identityController,
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Masukkan password';
+          return 'Masukkan NIM';
         }
         return null;
       },

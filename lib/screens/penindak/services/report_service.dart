@@ -259,4 +259,52 @@ class ReportService {
       return null;
     }
   }
+
+  /// Like a report via POST /report/:id/like
+  Future<bool> likeReport(int reportId) async {
+    try {
+      final token = await _getToken();
+      await _dio.post(
+        '/report/$reportId/like',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return true;
+    } on DioException catch (e) {
+      print('Error liking report: ${e.message}');
+      return false;
+    }
+  }
+
+  /// Add a comment to a report via POST /report/:id/comment
+  Future<Map<String, dynamic>?> addComment(int reportId, String comment) async {
+    try {
+      final token = await _getToken();
+      final response = await _dio.post(
+        '/report/$reportId/comment',
+        data: {'comment': comment},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return response.data;
+    } on DioException catch (e) {
+      print('Error adding comment: ${e.message}');
+      return null;
+    }
+  }
+
+  /// Get all comments for a report via GET /report/:id/comments
+  Future<List<Map<String, dynamic>>> getComments(int reportId) async {
+    try {
+      final token = await _getToken();
+      final response = await _dio.get(
+        '/report/$reportId/comments',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final data = response.data;
+      final List<dynamic> items = data['data'] ?? [];
+      return items.cast<Map<String, dynamic>>();
+    } on DioException catch (e) {
+      print('Error fetching comments: ${e.message}');
+      return [];
+    }
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:suara_mawa/screens/penindak/dashboard_screen.dart';
 import 'package:suara_mawa/screens/penindak/profile_screen.dart';
 import 'package:suara_mawa/screens/penindak/task_list_screen.dart';
+import 'package:suara_mawa/screens/public_aspirations/screens/public_aspirations_screen.dart';
 import 'package:suara_mawa/widgets/shared_main_screen.dart';
 
 class PenindakMainScreen extends StatelessWidget {
@@ -13,6 +14,7 @@ class PenindakMainScreen extends StatelessWidget {
       screens: [
         DashboardScreen(),
         TaskListScreen(),
+        PublicAspirationsScreen(),
         ProfileScreen(),
       ],
       destinations: [
@@ -25,6 +27,11 @@ class PenindakMainScreen extends StatelessWidget {
           icon: Icon(Icons.assignment_outlined),
           selectedIcon: Icon(Icons.assignment),
           label: 'Daftar Tugas',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.public_outlined),
+          selectedIcon: Icon(Icons.public),
+          label: 'Aspirasi Publik',
         ),
         NavigationDestination(
           icon: Icon(Icons.person_outline),

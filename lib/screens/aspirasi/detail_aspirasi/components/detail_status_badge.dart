@@ -10,6 +10,7 @@ class DetailStatusBadge extends StatelessWidget {
     return switch (status) {
       DetailStatus.submitted => const Color(0xFFEDEEF2),
       DetailStatus.underReview => const Color(0xFFB2EBF2),
+      DetailStatus.revision => const Color(0xFFFFF3E0),
       DetailStatus.inProgress => const Color(0xFF1B4332),
       DetailStatus.resolved => const Color(0xFF0D1B6E),
     };
@@ -19,6 +20,7 @@ class DetailStatusBadge extends StatelessWidget {
     return switch (status) {
       DetailStatus.submitted => const Color(0xFF5C6B8A),
       DetailStatus.underReview => const Color(0xFF00838F),
+      DetailStatus.revision => const Color(0xFFE65100),
       DetailStatus.inProgress => const Color(0xFF52B788),
       DetailStatus.resolved => Colors.white,
     };
@@ -28,6 +30,7 @@ class DetailStatusBadge extends StatelessWidget {
     return switch (status) {
       DetailStatus.submitted => Icons.assignment_late_outlined,
       DetailStatus.underReview => Icons.sync_rounded,
+      DetailStatus.revision => Icons.warning_amber_rounded,
       DetailStatus.inProgress => Icons.sync_rounded,
       DetailStatus.resolved => Icons.check_circle_outline,
     };

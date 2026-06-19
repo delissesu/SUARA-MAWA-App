@@ -383,7 +383,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     if (statusList.isEmpty) return true;
     
     final latestStatus = statusList.last['status'] as String?;
-    return latestStatus != 'resolved' && latestStatus != 'completed';
+    return latestStatus != 'resolved' && 
+           latestStatus != 'completed' && 
+           latestStatus != 'revision';
   }
 
   Widget _buildBody() {
@@ -425,6 +427,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
 
     final data = _data!;
+    final statusList = (data['reportStatus'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final latestStatus = statusList.isNotEmpty ? statusList.last['status'] as String? : null;
 
     return RefreshIndicator(
       onRefresh: _loadDetail,
@@ -434,6 +438,31 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (latestStatus == 'revision')
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  border: Border(bottom: BorderSide(color: Colors.orange.shade100)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange.shade800, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Menunggu perbaikan/tanggapan revisi dari mahasiswa.',
+                        style: TextStyle(
+                          color: Colors.orange.shade900,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             // ── Main info section ──
             Container(
               color: Colors.white,

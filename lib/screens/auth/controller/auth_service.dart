@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -237,6 +236,47 @@ class AuthService {
       return (false, _getErrorCode(e));
     }
   }
+
+  Future<(bool, String?)> uploadProfilePhoto(File file) async {
+    try {
+      final token = await this.getToken();
+      final fileName = file.path.replaceAll('\\', '/').split('/').last;
+      
+      final extension = fileName.split('.').last.toLowerCase();
+      final mediaType = switch (extension) {
+        'jpg' || 'jpeg' => DioMediaType('image', 'jpeg'),
+        'png' => DioMediaType('image', 'png'),
+        'webp' => DioMediaType('image', 'webp'),
+        'gif' => DioMediaType('image', 'gif'),
+        _ => DioMediaType('application', 'octet-stream'),
+      };
+
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: fileName,
+          contentType: mediaType,
+        ),
+      });
+
+      final response = await _dio.post(
+        '/users/profile/photo/upload',
+        data: formData,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          contentType: 'multipart/form-data',
+        ),
+      );
+
+      final isSuccess = response.statusCode == 200;
+      return (isSuccess, isSuccess ? "Success" : response.data.toString());
+    } on DioException catch (e) {
+      return (false, _getErrorCode(e));
+    } catch (e) {
+      return (false, e.toString());
+    }
+  }
+
 
   Future<void> logout(WidgetRef ref) async {
     await _storage.deleteAll();

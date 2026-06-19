@@ -120,6 +120,16 @@ class ReportService {
     return '$baseUrl/report/evidence/$reportEvidenceId/preview';
   }
 
+  /// Returns the full URL for previewing a feedback attachment.
+  String feedbackAttachmentPreviewUrl(int feedbackAttachmentId) {
+    return '$baseUrl/report/feedback/$feedbackAttachmentId/preview';
+  }
+
+  /// Returns the full URL for downloading a feedback attachment.
+  String feedbackAttachmentDownloadUrl(int feedbackAttachmentId) {
+    return '$baseUrl/report/feedback/$feedbackAttachmentId/download';
+  }
+
   // Feedback
 
   /// `POST /report/feedback/detail` — body: `{reportStatusId: int}`
@@ -245,6 +255,76 @@ class ReportService {
       );
     } catch (e) {
       return (false, 'Client error: $e');
+    }
+  }
+
+  // Public token accessor (for authenticated media widgets)
+
+  /// Exposes the auth token for widgets that need authenticated network calls.
+  Future<String?> getToken() => _getToken();
+
+  // Student revision feedback
+
+  /// `POST /report/feedback/create`
+  ///
+  /// Sends a student's revision response. The [status] should be `"pending"`
+  /// to transition the report back to the verification queue.
+  Future<(bool, String)> createFeedback({
+    required int reportId,
+    required String status,
+    required String description,
+    List<File>? files,
+  }) async {
+    try {
+      final options = await _authOptions();
+      options.contentType = 'multipart/form-data';
+
+      final formData = FormData.fromMap({
+        'reportId': reportId,
+        'status': status,
+        'description': description,
+      });
+
+      if (files != null && files.isNotEmpty) {
+        for (var i = 0; i < files.length; i++) {
+          final file = files[i];
+          final fileName = _fileNameFromPath(file.path);
+          final contentType = _contentTypeForFile(fileName);
+
+          formData.files.add(
+            MapEntry(
+              'files',
+              await MultipartFile.fromFile(
+                file.path,
+                filename: fileName,
+                contentType: contentType,
+              ),
+            ),
+          );
+          formData.fields.add(MapEntry('names[$i]', fileName));
+        }
+      }
+
+      final response = await _dio.post(
+        '/report/feedback/create',
+        data: formData,
+        options: options,
+      );
+
+      final body = response.data as Map<String, dynamic>;
+      final success = body['status'] == 'success';
+      final message = _messageFromResponseData(body);
+      return (success, message);
+    } on DioException catch (e) {
+      final responseMessage = _messageFromResponseData(e.response?.data);
+      return (
+        false,
+        responseMessage.isNotEmpty
+            ? responseMessage
+            : e.message ?? 'Terjadi kesalahan jaringan',
+      );
+    } catch (e) {
+      return (false, 'Terjadi kesalahan: $e');
     }
   }
 }

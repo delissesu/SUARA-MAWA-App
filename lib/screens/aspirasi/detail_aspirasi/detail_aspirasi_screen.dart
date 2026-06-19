@@ -11,6 +11,7 @@ import 'widgets/aspiration_detail_card.dart';
 import 'widgets/reported_location_card.dart';
 import 'widgets/resolution_timeline_card.dart';
 import 'widgets/official_response_card.dart';
+import 'widgets/revision_feedback_dialog.dart';
 
 class DetailAspirasiScreen extends StatefulWidget {
   /// The report ID to fetch from the API.
@@ -69,25 +70,24 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
         return;
       }
 
-      // Fetch official response/feedback if the report has status updates other than pending
+      // Fetch official response/feedback by searching backwards through the status history
       OfficialResponse? officialResponse;
-      final nonPendingStatuses = detail.statuses
-          .where((s) => s.status.toLowerCase() != 'pending')
-          .toList();
-      if (nonPendingStatuses.isNotEmpty) {
-        // Fetch feedback for the latest non-pending status
-        final latestStatus = nonPendingStatuses.last;
+      for (int i = detail.statuses.length - 1; i >= 0; i--) {
+        final statusItem = detail.statuses[i];
         try {
-          final feedbacks = await _reportService.getFeedbackDetail(latestStatus.id);
+          final feedbacks = await _reportService.getFeedbackDetail(statusItem.id);
           if (feedbacks.isNotEmpty) {
             final fb = feedbacks.first;
             if (fb.feedback != null) {
               officialResponse = OfficialResponse(
-                responderName: fb.changedBy?.name ?? latestStatus.author?.name ?? 'Official Responder',
+                responderName: fb.changedBy?.name ?? statusItem.author?.name ?? 'Official Responder',
                 timeAgo: fb.changedAt != null ? _timeAgo(fb.changedAt!) : '',
-                avatarLabel: (fb.changedBy?.name ?? latestStatus.author?.name ?? 'O')[0].toUpperCase(),
+                avatarLabel: (fb.changedBy?.name ?? statusItem.author?.name ?? 'O')[0].toUpperCase(),
                 message: fb.feedback!.description,
+                avatarUrl: fb.changedBy?.urlFotoProfil,
+                attachments: fb.feedback?.attachments ?? const [],
               );
+              break; // Found the latest status with feedback
             }
           }
         } catch (_) {}
@@ -145,6 +145,7 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
           : '',
       title: detail.title,
       currentStatus: DetailStatus.fromApiStatus(detail.latestStatus),
+      rawStatus: detail.latestStatus,
       attachmentImagePath: attachmentUrl,
       detailDescription: detail.description,
       locationAddress: detail.location ?? 'Detail lokasi tidak diberikan',
@@ -189,6 +190,9 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: const DetailAppBar(),
+      bottomNavigationBar: (_data != null && _data!.rawStatus == 'revision')
+          ? _buildRevisionActionBar()
+          : null,
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 400),
         switchInCurve: Curves.easeOut,
@@ -290,6 +294,58 @@ class _DetailAspirasiScreenState extends State<DetailAspirasiScreen> {
 
         const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
       ],
+    );
+  }
+
+  Widget _buildRevisionActionBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            offset: const Offset(0, -3),
+            blurRadius: 12,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => RevisionFeedbackDialog(
+                  reportId: widget.reportId,
+                  reportService: _reportService,
+                  onSuccess: _fetchDetail,
+                ),
+              );
+            },
+            icon: const Icon(Icons.reply_rounded, size: 20),
+            label: const Text(
+              'Tanggapi Revisi',
+              style: TextStyle(
+                fontFamily: 'PublicSans',
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A2B5F),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
