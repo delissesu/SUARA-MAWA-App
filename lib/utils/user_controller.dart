@@ -72,6 +72,7 @@ class User {
       email: email ?? this.email,
       photoProfileId: photoProfileId ?? this.photoProfileId,
       emailVerified: emailVerified ?? this.emailVerified,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       phoneNumberVerified: phoneNumberVerified ?? this.phoneNumberVerified,
       userRole: userRole ?? this.userRole,
       userRoleId: userRoleId ?? this.userRoleId,
