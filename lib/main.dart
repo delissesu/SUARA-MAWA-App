@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'utils/server_down.dart';
+import 'utils/load_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,8 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'PublicSans'
       ),
-      home: ServerDownPage(onRetry: () {
-      }),
+      home: const LoadingPage(message: "Menyiapkan data..."),
     );
   }
 }
