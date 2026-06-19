@@ -247,10 +247,11 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage> {
                               setState(() {
                                 _isLoading = true;
                               });
-                              bool res = await _authService.updatePassword(
-                                newPwController.text,
-                                currentPwController.text,
-                              );
+                              final (res, msg) = await _authService
+                                  .updatePassword(
+                                    newPwController.text,
+                                    currentPwController.text,
+                                  );
                               setState(() {
                                 _isLoading = false;
                               });
@@ -261,6 +262,11 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage> {
                                       'Password Berhasil Diperbarui',
                                     ),
                                   ),
+                                );
+                              } else {
+                                final message = msg ?? 'Tidak diketahui';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Gagal: $message')),
                                 );
                               }
                             }

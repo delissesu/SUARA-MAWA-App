@@ -38,7 +38,7 @@ class _SharedMainScreenState extends ConsumerState<SharedMainScreen> {
           CircleAvatar(
             radius: 20,
             backgroundImage: NetworkImage(
-              "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um)=>um.user?.name))}/profile/photo",
+              "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um)=>um.user?.name))}/profile/photo?dump=${ref.watch(userControllerProvider.select((um) => um.counter))}",
               headers: {
                 'Authorization':"Bearer ${ref.watch(userControllerProvider.select((um)=>um.token))}"
               }
@@ -147,7 +147,7 @@ PreferredSizeWidget buildAppBar(WidgetRef ref) {
           CircleAvatar(
             radius: 20,
             backgroundImage: NetworkImage(
-              "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um)=>um.user?.name))}/profile/photo",
+              "${const String.fromEnvironment('SERVER_BASE_URL', defaultValue: '')}/users/${ref.watch(userControllerProvider.select((um)=>um.user?.name))}/profile/photo?dump=${ref.watch(userControllerProvider.select((um) => um.counter))}",
               headers: {
                 'Authorization':"Bearer ${ref.watch(userControllerProvider.select((um)=>um.token))}"
               }

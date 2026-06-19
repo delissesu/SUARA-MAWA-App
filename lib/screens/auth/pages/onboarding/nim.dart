@@ -19,8 +19,9 @@ class _NimFormState extends State<NimForm> {
   final _authService = AuthService();
   bool _isLoading = true;
   bool _nimFilled = false;
-  final nimController = TextEditingController(text: '');
+  final textController = TextEditingController(text: '');
   final textStyle = const TextStyle(color: Colors.black, fontSize: 16);
+  bool _isMahasiswa = true;
   @override
   void initState() {
     super.initState();
@@ -28,53 +29,58 @@ class _NimFormState extends State<NimForm> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     final user = await _authService.getUser();
-    final nim = (await _authService.getMahasiswaDetail())?['nim'];
-    print(user);
-    final isFilled = nim != null;
-    if (isFilled) {
+    _isMahasiswa = user?.userRole?.name == "MAHASISWA";
+    final res = (await _authService.getDetail(isMahasiswa: _isMahasiswa));
+
+    final isFilled = res != null;
+    if (isFilled && mounted) {
+      if (_isMahasiswa) {
+        setState(() {
+          textController.text = res['nim'];
+        });
+      } else {
+        setState(() {
+          textController.text = res['nik'];
+        });
+      }
+    }
+    if (mounted) {
       setState(() {
-        nimController.text = nim;
+        email = user?.email ?? 'Not found';
+        _nimFilled = isFilled;
+        _isLoading = false;
       });
     }
-    setState(() {
-      email = user?.email ?? 'Not found';
-      _nimFilled = isFilled;
-      _isLoading = false;
-    });
   }
 
   Future<bool> _handleAppendNIM() async {
-    if (_nimFilled) {
+    setState(() {
+      _isLoading = true;
+    });
+    var (isSucces, content) = await _authService.appendNIM(textController.text);
+    print('IsSuccess: $isSucces');
+    if (isSucces) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => PhonePage()),
       );
+      setState(() {
+        _isLoading = false;
+      });
       return true;
     } else {
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
       });
-      var (isSucces, content) = await _authService.appendNIM(
-        nimController.text,
-      );
-      print('IsSuccess: $isSucces');
-      if (isSucces) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PhonePage()),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return true;
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        return false;
-      }
+      return false;
     }
   }
 
@@ -124,9 +130,9 @@ class _NimFormState extends State<NimForm> {
                         style: textStyle,
                         decoration: InputDecoration(
                           hintStyle: textStyle,
-                          hintText: 'NIM',
+                          hintText: _isMahasiswa ? 'NIM' : "NIK",
                           labelStyle: textStyle,
-                          labelText: 'NIM',
+                          labelText: _isMahasiswa ? 'NIM' : "NIK",
                           errorStyle: const TextStyle(
                             color: Colors.red,
                             fontSize: 16,
@@ -138,36 +144,39 @@ class _NimFormState extends State<NimForm> {
                             ),
                           ),
                         ),
-                        controller: nimController,
+                        controller: textController,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Masukkan NIM';
+                            return _isMahasiswa
+                                ? 'Masukkan NIM'
+                                : 'Masukkan NIK';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
-                      if (_nimFilled) ElevatedButton(
-                        onPressed: ()async {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const PhonePage(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          minimumSize: const Size(double.infinity, 44),
-                        ),
-                        child: const Text(
-                                "Selanjutnya",
-                                style: TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 16,
-                                ),
+                      if (_nimFilled)
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PhonePage(),
                               ),
-                      ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            minimumSize: const Size(double.infinity, 44),
+                          ),
+                          child: const Text(
+                            "Selanjutnya",
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
                       ElevatedButton(
                         onPressed: _handleAppendNIM,
                         style: ElevatedButton.styleFrom(
@@ -175,20 +184,22 @@ class _NimFormState extends State<NimForm> {
                           minimumSize: const Size(double.infinity, 44),
                         ),
                         child: (_nimFilled
-                                  ? const Text(
-                                      "Update NIM",
-                                      style: TextStyle(
-                                        color: AppColors.white,
-                                        fontSize: 16,
-                                      ),
-                                    )
-                                  : const Text(
-                                      "Tambahkan NIM",
-                                      style: TextStyle(
-                                        color: AppColors.white,
-                                        fontSize: 16,
-                                      ),
-                                    )),
+                            ? Text(
+                                _isMahasiswa ? "Update NIM" : 'Update NIK',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 16,
+                                ),
+                              )
+                            : Text(
+                                _isMahasiswa
+                                    ? "Tambahkan NIM"
+                                    : 'Tambahkan NIK',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 16,
+                                ),
+                              )),
                       ),
                       ElevatedButton(
                         onPressed: () async {

@@ -277,6 +277,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                               var (result, kode) = await _authService.checkAuth(
                                 ref,
                               );
+                              print("res: $result\nCode: $kode");
                               if (!result) {
                                 if (mounted) {
                                   _authService.HandleError(kode);

@@ -41,7 +41,7 @@ final class UserControllerProvider
   }
 }
 
-String _$userControllerHash() => r'b6239b3b08cdaf980074b7cef85c1bf3cac8bfc3';
+String _$userControllerHash() => r'2b2f596636aeca81a96510c61c7beb5aa565e3af';
 
 abstract class _$UserController extends $Notifier<UserModel> {
   UserModel build();

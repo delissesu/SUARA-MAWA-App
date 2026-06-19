@@ -23,9 +23,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void setupFirebaseListeners() {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    print(message.data);
     if (message.notification != null) {
       await NotificationService.showNotification(
-        id: int.tryParse(message.data['id']) ?? 0,
+        id: 0,
         title: message.notification!.title ?? 'Notifikasi',
         body: message.notification!.body ?? '',
       );

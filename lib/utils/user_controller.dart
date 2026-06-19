@@ -2,8 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'user_controller.g.dart';
 
-
-
 class User {
   final String id;
   final String name;
@@ -32,8 +30,7 @@ class User {
       id: json['id'],
       name: json['name'],
       email: json['email'],
-      photoProfileId:
-          json['photoProfileId'],
+      photoProfileId: json['photoProfileId'],
       emailVerified: json['emailVerified'] ?? false,
       phoneNumber: json['phoneNumber'],
       phoneNumberVerified: json['phoneNumberVerified'] ?? false,
@@ -67,7 +64,7 @@ class User {
     String? phoneNumber,
     bool? phoneNumberVerified,
     UserRole? userRole,
-    int? userRoleId
+    int? userRoleId,
   }) {
     return User(
       id: id ?? this.id,
@@ -77,7 +74,7 @@ class User {
       emailVerified: emailVerified ?? this.emailVerified,
       phoneNumberVerified: phoneNumberVerified ?? this.phoneNumberVerified,
       userRole: userRole ?? this.userRole,
-      userRoleId: userRoleId ?? this.userRoleId
+      userRoleId: userRoleId ?? this.userRoleId,
     );
   }
 }
@@ -96,9 +93,7 @@ class UserRole {
   }
 
   UserRole copyWith({String? name}) {
-    return UserRole(
-      name: name ?? this.name
-    );
+    return UserRole(name: name ?? this.name);
   }
 }
 
@@ -181,6 +176,7 @@ class UserModel {
   final PenindakDetail? penindakDetail;
   final AdminDetail? adminDetail;
   final String? token;
+  final int counter;
 
   UserModel({
     this.user,
@@ -188,6 +184,7 @@ class UserModel {
     this.penindakDetail,
     this.adminDetail,
     this.token,
+    this.counter = 0,
   });
 
   factory UserModel.initial() {
@@ -199,12 +196,14 @@ class UserModel {
     MahasiswaDetail? mahasiswaDetail,
     PenindakDetail? penindakDetail,
     AdminDetail? adminDetail,
+    int? counter,
   }) {
     return UserModel(
       user: user ?? this.user,
       mahasiswaDetail: mahasiswaDetail ?? this.mahasiswaDetail,
       penindakDetail: penindakDetail ?? this.penindakDetail,
       adminDetail: adminDetail ?? this.adminDetail,
+      counter: counter ?? this.counter,
     );
   }
 }
@@ -225,29 +224,37 @@ class UserController extends _$UserController {
 
   void updateUserProfile(
     String? name,
-    String? prodi,
-    int? photoProfileId,
-    String? nim,
   ) {
     state = state.copyWith(
       user: state.user?.copyWith(
         name: name,
-        // prodi: prodi,
-        photoProfileId: photoProfileId,
       ),
     );
   }
 
-  void updateMahasiswaDetail() {
-    state = state;
+  void updatePhotoProfile() {
+    state = state.copyWith(counter: state.counter + 1);
   }
 
-  void updatePenindakDetail() {
-    state = state;
+  void updateMahasiswaDetail(String nim) {
+    final data = state.mahasiswaDetail?.copyWith(nim: nim);
+    if (data != null) {
+      state = state.copyWith(mahasiswaDetail: data);
+    }
   }
 
-  void updateAdminDetail() {
-    state = state;
+  void updatePenindakDetail(String nik) {
+    final data = state.penindakDetail?.copyWith(nik: nik);
+    if (data != null) {
+      state = state.copyWith(penindakDetail: data);
+    }
+  }
+
+  void updateAdminDetail(String nik) {
+    final data = state.adminDetail?.copyWith(nik: nik);
+    if (data != null) {
+      state = state.copyWith(adminDetail: data);
+    }
   }
 
   void destroy() {
