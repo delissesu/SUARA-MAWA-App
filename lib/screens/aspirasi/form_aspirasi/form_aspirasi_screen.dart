@@ -12,6 +12,7 @@ import 'widgets/form_page_header.dart';
 import 'widgets/aspiration_details_section.dart';
 import 'widgets/location_section.dart';
 import 'widgets/attachments_section.dart';
+import 'widgets/privacy_section.dart';
 import 'widgets/form_action_buttons.dart';
 
 class FormAspirasiScreen extends StatefulWidget {
@@ -43,6 +44,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
   bool _isLoadingLookups = true;
   LatLng? _selectedLocation;
   bool _isFetchingGps = false;
+  bool _isPublic = true;
 
   List<ReportCategory> _categories = [];
   List<ReportDepartment> _departments = [];
@@ -111,7 +113,7 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
         locationLat: _selectedLocation?.latitude ?? 0.0,
         locationLong: _selectedLocation?.longitude ?? 0.0,
         location: locationDetail.isNotEmpty ? locationDetail : null,
-        isPublic: true,
+        isPublic: _isPublic,
         departmentId: _selectedDepartmentId!,
         categoryId: _selectedCategoryId!,
         files: _attachments,
@@ -390,6 +392,12 @@ class _FormAspirasiScreenState extends State<FormAspirasiScreen> {
                         onUploadGallery: _handleUploadGallery,
                         attachments: _attachments,
                         onRemoveAttachment: _handleRemoveAttachment,
+                      ),
+                      const SizedBox(height: 16),
+                      PrivacySection(
+                        isPublic: _isPublic,
+                        onChanged: (value) =>
+                            setState(() => _isPublic = value),
                       ),
                       const SizedBox(height: 32),
                       FormActionButtons(

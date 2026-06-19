@@ -145,9 +145,26 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
       if (selectedImage != null) {
         ref.read(userControllerProvider.notifier).updatePhotoProfile();
       }
-      ref.read(userControllerProvider.notifier).updateMahasiswaDetail(
-        
-      );
+      if (nameController.text != userModel.user?.name) {
+        ref.read(userControllerProvider.notifier).updateUserProfile(
+          nameController.text,
+        );
+      }
+      if (isMahasiswa) {
+        ref.read(userControllerProvider.notifier).updateMahasiswaDetail(
+          identityController.text,
+        );
+      } else {
+        if (userModel.penindakDetail != null) {
+          ref.read(userControllerProvider.notifier).updatePenindakDetail(
+            identityController.text,
+          );
+        } else if (userModel.adminDetail != null) {
+          ref.read(userControllerProvider.notifier).updateAdminDetail(
+            identityController.text,
+          );
+        }
+      }
       if (nomorHPController.text != userModel.user?.phoneNumber && mounted) {
         Navigator.pushAndRemoveUntil(
           context,
