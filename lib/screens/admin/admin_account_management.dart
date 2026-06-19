@@ -26,7 +26,7 @@ class _AdminAccountManagementState extends State<AdminAccountManagement> {
   String _search = '';
   String _roleFilter = 'All Roles';
   // String _statusFilter = 'Status: Active';
-  int _page = 0;
+  int _page = 1;
   int _pageSize = 0;
   static const _roleOptions = ['All Roles', 'Admin', 'Mahasiswa', 'Penindak'];
   // static const _statusOptions = ['Status: Active', 'Status: Inactive', 'Status: Suspended', 'All Status'];

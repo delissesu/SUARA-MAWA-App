@@ -393,7 +393,7 @@ class _UpdateProfilePageState extends ConsumerState<UpdateProfilePage> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            "Mengganti nomor telepon akan memerlukan verifikasi dengan OTP",
+                            "Mengganti nomor telepon akan memerlukan verifikasi OTP",
                           ),
 
                           const SizedBox(height: 16),

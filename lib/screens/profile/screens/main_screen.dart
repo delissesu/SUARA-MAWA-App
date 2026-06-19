@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:suara_mawa/screens/auth/index.dart';
+import 'package:suara_mawa/screens/profile/screens/help.dart';
 import 'package:suara_mawa/screens/profile/screens/password_change.dart';
 import 'package:suara_mawa/screens/profile/screens/update_profile.dart';
 import 'package:suara_mawa/utils/app_colors.dart';
@@ -58,13 +59,18 @@ class ProfileOptions extends ConsumerWidget {
         icon: Icons.question_mark,
         iconColor: const Color(0xFF09A886),
         backgroundColor: const Color(0xFF5CF6CA),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HelpPage()),
+          );
+        },
       ),
       ProfileMenuItem(
         title: "Logout",
         icon: Icons.logout,
-        iconColor: Colors.red,
-        backgroundColor: const Color(0xFFE97067),
+        iconColor: Color(0xFFD32F2F),
+        backgroundColor: Color(0xFFFFEBEE),
         onTap: () async {
           final result = await showDialog<bool>(
             context: context,
@@ -161,32 +167,6 @@ class ProfileOptions extends ConsumerWidget {
         ],
       ),
     );
-    //   child: ListView.separated(
-    //     padding: const EdgeInsets.symmetric(vertical: 8),
-    //     itemCount: menus.length,
-    //     separatorBuilder: (_, __) => const Divider(height: 1),
-    //     itemBuilder: (context, index) {
-    //       final item = menus[index];
-
-    //       return ListTile(
-    //         contentPadding: const EdgeInsets.symmetric(
-    //           horizontal: 16,
-    //           vertical: 8,
-    //         ),
-    //         leading: CircleAvatar(
-    //           backgroundColor: item.backgroundColor,
-    //           child: Icon(
-    //             item.icon,
-    //             color: item.iconColor,
-    //           ),
-    //         ),
-    //         title: Text(item.title),
-    //         trailing: const Icon(Icons.chevron_right),
-    //         onTap: item.onTap,
-    //       );
-    //     },
-    //   ),
-    // );
   }
 }
 

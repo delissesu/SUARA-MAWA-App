@@ -56,11 +56,11 @@ class _SharedMainScreenState extends ConsumerState<SharedMainScreen> {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none_outlined, color: AppColors.primary),
-          onPressed: () {},
-        ),
-        const SizedBox(width: 8),
+        // IconButton(
+        //   icon: const Icon(Icons.notifications_none_outlined, color: AppColors.primary),
+        //   onPressed: () {},
+        // ),
+        // const SizedBox(width: 8),
       ],
     );
   }

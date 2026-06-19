@@ -24,7 +24,6 @@ class _FirstPageState extends ConsumerState<FirstPage> {
 
   Future<String> _check() async {
     var (res, code) = await _authHandler.checkAuth(ref);
-    print("Result: $res, code: $code");
     if (res) {
       return "SUCCESS";
     } else {

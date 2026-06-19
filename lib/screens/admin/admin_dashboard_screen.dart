@@ -96,7 +96,6 @@ class DashboardAdmin extends StatelessWidget {
     return const SharedMainScreen(
       screens: [
         _AdminDashboardBody(),
-        // AdminDaftarAspirasiScreen(),
         PublicAspirationsScreen(),
         AdminAccountManagement(),
         ProfileScreen(),
@@ -107,11 +106,6 @@ class DashboardAdmin extends StatelessWidget {
           selectedIcon: Icon(Icons.home),
           label: 'Home',
         ),
-        // NavigationDestination(
-        //   icon: Icon(Icons.list_alt_outlined),
-        //   selectedIcon: Icon(Icons.list_alt),
-        //   label: 'Daftar Aspirasi',
-        // ),
         NavigationDestination(
           icon: Icon(Icons.public_outlined),
           selectedIcon: Icon(Icons.public),
@@ -200,8 +194,6 @@ class _AdminDashboardBodyState extends State<_AdminDashboardBody> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      print('Error in _loadDashboardData: $e');
-      print(stackTrace);
       setState(() {
         _isLoading = false;
         _errorMessage = 'Terjadi kesalahan saat memuat data: $e';
